@@ -1,9 +1,39 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://jzxoesdbgykmqzmllrqc.supabase.co'
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || ''
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+// Debug logging
+console.log('Supabase URL:', supabaseUrl ? 'Set' : 'Not set')
+console.log('Supabase Anon Key:', supabaseAnonKey ? 'Set' : 'Not set')
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(`Missing Supabase environment variables:
+    URL: ${supabaseUrl ? 'Set' : 'Missing'}
+    Anon Key: ${supabaseAnonKey ? 'Set' : 'Missing'}
+  `)
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+})
+
+// Test the connection
+;(async () => {
+  try {
+    const { error } = await supabase.from('Players').select('count', { count: 'exact', head: true })
+    if (error) {
+      console.error('Supabase connection test failed:', error)
+    } else {
+      console.log('Supabase connection test successful')
+    }
+  } catch (error) {
+    console.error('Supabase connection test error:', error)
+  }
+})()
 
 // Type definitions based on your schema
 export type Player = {
