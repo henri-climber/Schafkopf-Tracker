@@ -54,11 +54,18 @@ export function PastGames() {
                 key={game.id}
                 onClick={() => navigate(`/game-details/${game.id}`)}
                 style={{ backgroundColor: '#1F1F1F' }}
-                className="w-full p-4 text-left rounded-lg hover:opacity-90 transition-opacity"
+                className="w-full p-4 text-left rounded-lg hover:opacity-90 transition-opacity relative"
               >
                 <div className="font-medium text-white">{game.name}</div>
                 <div className="text-sm text-gray-400">
                   Played on {new Date(game.created_at).toLocaleDateString()}
+                </div>
+                <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${
+                  game.exclude_from_overall 
+                    ? 'bg-yellow-600 text-white' 
+                    : 'bg-green-600 text-white'
+                }`}>
+                  {game.exclude_from_overall ? 'Excluded' : 'Included'}
                 </div>
               </button>
             ))}

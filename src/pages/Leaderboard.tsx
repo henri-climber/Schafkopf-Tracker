@@ -10,6 +10,47 @@ interface Player {
   gamesPlayed: number
 }
 
+interface Semester {
+  id: string
+  label: string
+  startDate: string
+  endDate: string
+}
+
+const SEMESTERS: Semester[] = [
+  {
+    id: 'sem1',
+    label: 'Semester 1 (Sep 2024 - March 2025)',
+    startDate: '2024-09-01T00:00:00.000Z',
+    endDate: '2025-03-31T23:59:59.999Z'
+  },
+  {
+    id: 'sem2',
+    label: 'Semester 2 (April 2025 - August 2025)',
+    startDate: '2025-04-01T00:00:00.000Z',
+    endDate: '2025-08-31T23:59:59.999Z'
+  },
+  {
+    id: 'sem3',
+    label: 'Semester 3 (Sep 2025 - Apr 2026)',
+    startDate: '2025-09-01T00:00:00.000Z',
+    endDate: '2026-04-30T23:59:59.999Z'
+  }
+]
+
+const SEMESTER_3_OFFSETS: Record<string, number> = {
+  'Nikita': -2,
+  'Quentin': -1,
+  'Jost': 1,
+  'Finy': -4,
+  'Riccardo': 5,
+  'Emil': 0,
+  'Henri': 4,
+  'Timon': -2,
+  'Lukas': 1,
+  'Pfirrmann': -2
+}
+
 
 export function Leaderboard() {
   const [players, setPlayers] = useState<Player[]>([])
@@ -18,10 +59,13 @@ export function Leaderboard() {
   const [isAddingPlayer, setIsAddingPlayer] = useState(false)
   const [newPlayerName, setNewPlayerName] = useState('')
   const [includeOngoing, setIncludeOngoing] = useState(false)
+  const [selectedSemesterId, setSelectedSemesterId] = useState<string>(SEMESTERS[2].id)
+
+  const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEMESTERS[0]
 
   useEffect(() => {
     loadLeaderboard()
-  }, [includeOngoing])
+  }, [includeOngoing, selectedSemesterId])
 
   function getPointsDistribution(playerCount: number): number[] {
     switch (playerCount) {
@@ -58,6 +102,8 @@ export function Leaderboard() {
         .from('Tables')
         .select('id, name, exclude_from_overall')
         .eq('exclude_from_overall', false)
+        .gte('created_at', selectedSemester.startDate)
+        .lte('created_at', selectedSemester.endDate)
 
       // Only add is_open filter if we're not including ongoing games
       if (!includeOngoing) {
@@ -122,6 +168,24 @@ export function Leaderboard() {
 
       // Convert player map to sorted array
       const sortedPlayers = Array.from(playerMap.values())
+        .map(player => {
+          // Apply Semester 3 offsets
+          if (selectedSemester.id === 'sem3') {
+            const offset = SEMESTER_3_OFFSETS[player.name] || 0
+            return {
+              ...player,
+              totalScore: player.totalScore + offset
+            }
+          }
+          return player
+        })
+        .filter(player => {
+          // Remove Danilo from Semester 3 onwards
+          if (selectedSemester.id === 'sem3' && player.name === 'Danilo') {
+            return false
+          }
+          return true
+        })
         .sort((a, b) => b.totalScore - a.totalScore)
 
       setPlayers(sortedPlayers)
@@ -159,6 +223,21 @@ export function Leaderboard() {
     <div className="flex flex-col min-h-screen bg-white text-black">
       <div className="p-4 border-b">
         <h1 className="text-2xl font-bold text-center mb-4">Leaderboard</h1>
+
+        <div className="flex justify-center mb-4">
+          <select
+            value={selectedSemesterId}
+            onChange={(e) => setSelectedSemesterId(e.target.value)}
+            className="px-4 py-2 border rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {SEMESTERS.map((semester) => (
+              <option key={semester.id} value={semester.id}>
+                {semester.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="flex justify-center items-center gap-4">
           <button
             onClick={() => setIsAddingPlayer(true)}
@@ -243,7 +322,10 @@ export function Leaderboard() {
             </tbody>
           </table>
 
-          <PlayerScoreChart />
+          <PlayerScoreChart
+            startDate={selectedSemester.startDate}
+            endDate={selectedSemester.endDate}
+          />
         </div>
       </div>
     </div>

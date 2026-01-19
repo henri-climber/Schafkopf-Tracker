@@ -47,7 +47,12 @@ function formatTimestamp(timestamp: string) {
   }).format(date)
 }
 
-export function PlayerScoreChart() {
+interface Props {
+  startDate: string
+  endDate: string
+}
+
+export function PlayerScoreChart({ startDate, endDate }: Props) {
   const [chartData, setChartData] = useState<ChartData[]>([])
   const [players, setPlayers] = useState<PlayerScore[]>([])
   const [loading, setLoading] = useState(true)
@@ -55,7 +60,7 @@ export function PlayerScoreChart() {
 
   useEffect(() => {
     loadChartData()
-  }, [])
+  }, [startDate, endDate])
 
   async function loadChartData() {
     try {
@@ -75,12 +80,16 @@ export function PlayerScoreChart() {
       }))
 
       // 2. Get all tables with their creation dates
-      const { data: tablesData, error: tablesError } = await supabase
+      let query = supabase
         .from('Tables')
         .select('id, created_at')
         .eq('exclude_from_overall', false)
         .eq('is_open', false)
+        .gte('created_at', startDate)
+        .lte('created_at', endDate)
         .order('created_at', { ascending: true })
+
+      const { data: tablesData, error: tablesError } = await query
 
       if (tablesError) throw tablesError
 
@@ -133,12 +142,12 @@ export function PlayerScoreChart() {
           if (playerIndex !== -1) {
             const currentScore = playerScores[playerIndex].scores
               .reduce((total: number, entry: ScoreEntry) => total + entry.score, 0)
-            
+
             const newScore: ScoreEntry = {
               timestamp,
               score: points[index] || 0
             }
-            
+
             playerScores[playerIndex].scores.push(newScore)
 
             // Update timestamp-based scores
@@ -196,8 +205,8 @@ export function PlayerScoreChart() {
             data={chartData}
             margin={{ top: 5, right: 10, left: 0, bottom: 25 }}
           >
-            <CartesianGrid 
-              strokeDasharray="3 3" 
+            <CartesianGrid
+              strokeDasharray="3 3"
               stroke="#e5e7eb"
               strokeWidth={1}
             />
@@ -228,7 +237,7 @@ export function PlayerScoreChart() {
                 padding: '8px 12px'
               }}
             />
-            <Legend 
+            <Legend
               wrapperStyle={{
                 paddingTop: '10px'
               }}
