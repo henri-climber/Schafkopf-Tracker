@@ -1,0 +1,270 @@
+@reference "tailwindcss";
+
+.leaderboard-page {
+    @apply min-h-screen bg-gray-50 text-gray-900 pb-24;
+}
+
+.loading-container {
+    @apply min-h-screen flex items-center justify-center bg-gray-50;
+}
+
+.spinner {
+    @apply animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600;
+}
+
+.error-container {
+    @apply min-h-screen flex items-center justify-center bg-gray-50 text-red-500;
+}
+
+/* Header Section */
+.header-sticky {
+    @apply bg-white shadow-sm border-b sticky top-0 z-20;
+}
+
+.header-content {
+    @apply max-w-[1000px] mx-auto px-2 min-[800px]:px-4 py-4;
+}
+
+.header-row {
+    @apply flex flex-col min-[800px]:flex-row items-center justify-between gap-4;
+}
+
+.page-title {
+    @apply text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600;
+}
+
+.controls-group {
+    @apply flex flex-col w-full min-[800px]:w-auto min-[800px]:flex-row items-center gap-3;
+}
+
+.semester-select {
+    @apply w-full min-[800px]:w-auto px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-shadow cursor-pointer hover:bg-gray-100;
+}
+
+.add-player-btn {
+    @apply w-full min-[800px]:w-auto justify-center flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium;
+}
+
+/* Toggle Switch */
+.toggle-wrapper {
+    @apply mt-4 flex items-center justify-center;
+}
+
+.toggle-label {
+    @apply flex items-center cursor-pointer gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors;
+}
+
+.toggle-input {
+    @apply sr-only;
+}
+
+.toggle-switch {
+    @apply w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600;
+}
+
+.toggle-text {
+    @apply text-sm font-medium text-gray-600 select-none;
+}
+
+/* Modal */
+.modal-overlay {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4;
+}
+
+.modal-panel {
+    @apply bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm transform transition-all scale-100;
+}
+
+.modal-title {
+    @apply text-xl font-bold mb-4;
+}
+
+.modal-input {
+    @apply w-full px-4 py-3 border border-gray-200 rounded-xl mb-4 focus:ring-2 focus:ring-blue-500 outline-none;
+}
+
+.modal-actions {
+    @apply flex gap-3;
+}
+
+.btn-cancel {
+    @apply flex-1 px-4 py-2.5 text-gray-700 font-medium hover:bg-gray-100 rounded-xl transition-colors;
+}
+
+.btn-save {
+    @apply flex-1 px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200;
+}
+
+/* Main Content */
+.main-content {
+    @apply max-w-[1000px] mx-auto px-2 min-[800px]:px-4 py-8 space-y-8;
+}
+
+/* Podium Section */
+.podium-container {
+    @apply hidden min-[800px]:flex flex-row items-end justify-center gap-4 mb-12 min-h-[220px];
+}
+
+.podium-card {
+    @apply flex-1 w-full md:w-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center justify-between transform hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden;
+}
+
+.podium-card-2 {
+    @apply order-1 h-[180px];
+}
+
+.podium-card-1 {
+    @apply order-2 h-[220px] shadow-lg border-yellow-100 hover:-translate-y-2 ring-1 ring-yellow-100;
+}
+
+.podium-card-3 {
+    @apply order-3 h-[160px];
+}
+
+.podium-stripe {
+    @apply absolute top-0 inset-x-0 h-1;
+}
+
+.podium-stripe-2 {
+    @apply bg-gray-300;
+}
+
+.podium-stripe-1 {
+    @apply h-1.5 bg-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)];
+}
+
+.podium-stripe-3 {
+    @apply bg-orange-300;
+}
+
+.podium-number {
+    @apply font-bold font-mono mb-2;
+}
+
+.podium-number-2 {
+    @apply text-3xl text-gray-400;
+}
+
+.podium-number-1 {
+    @apply text-5xl text-yellow-400;
+}
+
+.podium-number-3 {
+    @apply text-3xl text-orange-300;
+}
+
+.podium-name {
+    @apply font-bold text-lg mb-1;
+}
+
+.podium-score {
+    @apply text-2xl font-bold text-gray-600;
+}
+
+.podium-score-1 {
+    @apply text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-yellow-500 to-amber-600;
+}
+
+.podium-games {
+    @apply text-xs font-medium bg-gray-50 px-3 py-1 rounded-full text-gray-400;
+    /* Default/2nd/3rd */
+}
+
+.podium-games-1 {
+    @apply text-sm text-yellow-700 font-medium bg-yellow-50 px-4 py-1.5 rounded-full border border-yellow-100;
+}
+
+
+/* List/Table Section */
+.list-card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden;
+}
+
+.table-wrapper {
+    @apply overflow-x-auto;
+}
+
+.t-table {
+    @apply w-full;
+}
+
+.t-head {
+    @apply bg-gray-50 border-b border-gray-100;
+}
+
+.t-header-cell {
+    @apply px-2 py-2 min-[500px]:px-6 min-[500px]:py-4 text-left text-[10px] min-[500px]:text-xs font-semibold text-gray-500 uppercase tracking-wider;
+}
+
+.t-header-cell-right {
+    @apply px-2 py-2 min-[500px]:px-6 min-[500px]:py-4 text-right text-[10px] min-[500px]:text-xs font-semibold text-gray-500 uppercase tracking-wider;
+}
+
+.t-body {
+    @apply divide-y divide-gray-50;
+}
+
+.t-row {
+    @apply hover:bg-gray-50/80 transition-colors;
+}
+
+.t-cell {
+    @apply px-2 py-2 min-[500px]:px-6 min-[500px]:py-4 whitespace-nowrap;
+}
+
+.t-cell-right {
+    @apply px-2 py-2 min-[500px]:px-6 min-[500px]:py-4 whitespace-nowrap text-right;
+}
+
+.rank-badge {
+    @apply text-xs min-[500px]:text-sm font-bold font-mono w-6 h-6 min-[500px]:w-8 min-[500px]:h-8 flex items-center justify-center rounded-full transition-colors;
+}
+
+.rank-1 {
+    @apply bg-yellow-100 text-yellow-700;
+}
+
+.rank-2 {
+    @apply bg-gray-100 text-gray-700;
+}
+
+.rank-3 {
+    @apply bg-orange-100 text-orange-700;
+}
+
+.rank-other {
+    @apply bg-gray-50 text-gray-400 group-hover:bg-white;
+}
+
+.player-name-text {
+    @apply font-medium text-sm min-[500px]:text-base text-gray-900;
+}
+
+.games-text {
+    @apply text-xs min-[500px]:text-sm text-gray-500;
+}
+
+.score-text {
+    @apply text-sm min-[500px]:text-lg font-bold font-mono;
+}
+
+.score-positive {
+    @apply text-green-600;
+}
+
+.score-negative {
+    @apply text-red-600;
+}
+
+.score-neutral {
+    @apply text-gray-400;
+}
+
+/* Chart Section */
+.chart-container {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-3 min-[800px]:p-6;
+}
+
+.chart-title {
+    @apply text-lg font-bold mb-6 text-gray-800;
+}

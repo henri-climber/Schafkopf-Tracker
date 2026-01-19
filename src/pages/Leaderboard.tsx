@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { PlayerScoreChart } from '../components/PlayerScoreChart'
+import './Leaderboard.css'
 
 interface Player {
   id: number
@@ -216,112 +217,213 @@ export function Leaderboard() {
     }
   }
 
-  if (loading) return <div className="text-center p-4">Loading...</div>
-  if (error) return <div className="text-center text-red-500 p-4">Error: {error}</div>
+  if (loading) return (
+    <div className="loading-container">
+      <div className="spinner"></div>
+    </div>
+  )
+
+  if (error) return (
+    <div className="error-container">
+      Error: {error}
+    </div>
+  )
+
+  const top3 = players.slice(0, 3)
 
   return (
-    <div className="flex flex-col min-h-screen bg-white text-black">
-      <div className="p-4 border-b">
-        <h1 className="text-2xl font-bold text-center mb-4">Leaderboard</h1>
+    <div className="leaderboard-page">
+      {/* Header Section */}
+      <div className="header-sticky">
+        <div className="header-content">
+          <div className="header-row">
+            <h1 className="page-title">
+              Leaderboard
+            </h1>
 
-        <div className="flex justify-center mb-4">
-          <select
-            value={selectedSemesterId}
-            onChange={(e) => setSelectedSemesterId(e.target.value)}
-            className="px-4 py-2 border rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {SEMESTERS.map((semester) => (
-              <option key={semester.id} value={semester.id}>
-                {semester.label}
-              </option>
-            ))}
-          </select>
-        </div>
+            <div className="controls-group">
+              <select
+                value={selectedSemesterId}
+                onChange={(e) => setSelectedSemesterId(e.target.value)}
+                className="semester-select"
+              >
+                {SEMESTERS.map((semester) => (
+                  <option key={semester.id} value={semester.id}>
+                    {semester.label}
+                  </option>
+                ))}
+              </select>
 
-        <div className="flex justify-center items-center gap-4">
-          <button
-            onClick={() => setIsAddingPlayer(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:opacity-90 transition-opacity"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
-            Add Player
-          </button>
-
-          <label className="inline-flex items-center cursor-pointer gap-2">
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={includeOngoing}
-                onChange={(e) => setIncludeOngoing(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+              <button
+                onClick={() => setIsAddingPlayer(true)}
+                className="add-player-btn"
+                title="Add Player"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Add Player</span>
+              </button>
             </div>
-            <span className="text-sm font-medium text-gray-600">
-              Include ongoing games
-            </span>
-          </label>
-        </div>
+          </div>
 
-        {isAddingPlayer && (
-          <form onSubmit={handleAddPlayer} className="flex gap-2 justify-center mt-4">
+          <div className="toggle-wrapper">
+            <label className="toggle-label">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={includeOngoing}
+                  onChange={(e) => setIncludeOngoing(e.target.checked)}
+                  className="toggle-input peer"
+                />
+                <div className="toggle-switch"></div>
+              </div>
+              <span className="toggle-text">
+                Include ongoing games
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {isAddingPlayer && (
+        <div className="modal-overlay">
+          <form onSubmit={handleAddPlayer} className="modal-panel">
+            <h3 className="modal-title">Add New Player</h3>
             <input
               type="text"
               value={newPlayerName}
               onChange={(e) => setNewPlayerName(e.target.value)}
               placeholder="Player name"
-              className="px-3 py-2 border rounded-lg text-black"
+              className="modal-input"
               autoFocus
             />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:opacity-90 transition-opacity"
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsAddingPlayer(false)
-                setNewPlayerName('')
-              }}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:opacity-90 transition-opacity"
-            >
-              Cancel
-            </button>
+            <div className="modal-actions">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddingPlayer(false)
+                  setNewPlayerName('')
+                }}
+                className="btn-cancel"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn-save"
+              >
+                Save
+              </button>
+            </div>
           </form>
+        </div>
+      )}
+
+      <div className="main-content">
+
+        {/* Podium Section - Only visible >= 800px */}
+        {top3.length > 0 && (
+          <div className="podium-container">
+            {/* Second Place */}
+            {top3[1] && (
+              <div className="podium-card podium-card-2">
+                <div className="podium-stripe podium-stripe-2"></div>
+                <div className="podium-number podium-number-2">2</div>
+                <div className="text-center">
+                  <div className="podium-name">{top3[1].name}</div>
+                  <div className="podium-score">{top3[1].totalScore > 0 ? '+' : ''}{top3[1].totalScore}</div>
+                </div>
+                <div className="podium-games">{top3[1].gamesPlayed} games</div>
+              </div>
+            )}
+
+            {/* First Place */}
+            {top3[0] && (
+              <div className="podium-card podium-card-1">
+                <div className="podium-stripe podium-stripe-1"></div>
+                <div className="podium-number podium-number-1">👑</div>
+                <div className="text-center">
+                  <div className="podium-name">{top3[0].name}</div>
+                  <div className="podium-score-1">
+                    {top3[0].totalScore > 0 ? '+' : ''}{top3[0].totalScore}
+                  </div>
+                </div>
+                <div className="podium-games-1">{top3[0].gamesPlayed} games</div>
+              </div>
+            )}
+
+            {/* Third Place */}
+            {top3[2] && (
+              <div className="podium-card podium-card-3">
+                <div className="podium-stripe podium-stripe-3"></div>
+                <div className="podium-number podium-number-3">3</div>
+                <div className="text-center">
+                  <div className="podium-name">{top3[2].name}</div>
+                  <div className="podium-score">{top3[2].totalScore > 0 ? '+' : ''}{top3[2].totalScore}</div>
+                </div>
+                <div className="podium-games">{top3[2].gamesPlayed} games</div>
+              </div>
+            )}
+          </div>
         )}
-      </div>
 
-      <div className="flex-1 p-4">
-        <div className="max-w-2xl mx-auto">
-          <table className="w-full">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-3 text-left font-semibold">Rank</th>
-                <th className="p-3 text-left font-semibold">Player</th>
-                <th className="p-3 text-right font-semibold">Score</th>
-                <th className="p-3 text-right font-semibold">Games</th>
-              </tr>
-            </thead>
-            <tbody>
-              {players.map((player, index) => (
-                <tr key={player.id} className="hover:bg-gray-50">
-                  <td className="p-3 border-b">{index + 1}</td>
-                  <td className="p-3 border-b font-medium">{player.name}</td>
-                  <td className="p-3 border-b text-right">
-                    {player.totalScore > 0 ? '+' : ''}{player.totalScore}
-                  </td>
-                  <td className="p-3 border-b text-right text-gray-600">
-                    {player.gamesPlayed}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Players List - Shows ALL players < 800px, but only Rest > 800px */}
+        {players.length > 0 && (
+          <div className="list-card">
+            <div className="table-wrapper">
+              <table className="t-table">
+                <thead className="t-head">
+                  <tr>
+                    <th className="t-header-cell">Rank</th>
+                    <th className="t-header-cell">Player</th>
+                    <th className="t-header-cell-right">Games</th>
+                    <th className="t-header-cell-right">Score</th>
+                  </tr>
+                </thead>
+                <tbody className="t-body">
+                  {players.map((player, index) => {
+                    // Hide top 3 players on desktop since they are in the podium
+                    // Show everyone on mobile (< 800px)
+                    const isTop3 = index < 3;
+                    const rank = index + 1;
 
+                    return (
+                      <tr key={player.id} className={`t-row group ${isTop3 ? 'min-[800px]:hidden' : ''}`}>
+                        <td className="t-cell">
+                          <span className={`rank-badge ${rank === 1 ? 'rank-1' :
+                            rank === 2 ? 'rank-2' :
+                              rank === 3 ? 'rank-3' :
+                                'rank-other'
+                            }`}>
+                            {rank}
+                          </span>
+                        </td>
+                        <td className="t-cell">
+                          <div className="player-name-text">{player.name}</div>
+                        </td>
+                        <td className="t-cell-right">
+                          <span className="games-text">{player.gamesPlayed}</span>
+                        </td>
+                        <td className="t-cell-right">
+                          <span className={`score-text ${player.totalScore > 0 ? 'score-positive' :
+                            player.totalScore < 0 ? 'score-negative' : 'score-neutral'
+                            }`}>
+                            {player.totalScore > 0 ? '+' : ''}{player.totalScore}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Chart Section */}
+        <div className="chart-container">
+          <h3 className="chart-title">Performance History</h3>
           <PlayerScoreChart
             startDate={selectedSemester.startDate}
             endDate={selectedSemester.endDate}
@@ -330,4 +432,4 @@ export function Leaderboard() {
       </div>
     </div>
   )
-} 
+}
