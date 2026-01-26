@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+.chart-container {
+  @apply mt-8 px-4;
+}
+
+.chart-title {
+  @apply text-xl font-semibold mb-4 text-center;
+}
+
+.chart-wrapper {
+  @apply w-full h-[500px];
+}
+
+.chart-loading {
+  @apply text-center p-4;
+}
+
+.chart-error {
+  @apply text-center text-red-500 p-4;
+}
+
+.chart-no-data {
+  @apply text-center p-4;
+}

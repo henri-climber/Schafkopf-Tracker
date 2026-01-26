@@ -1,0 +1,197 @@
+@import "tailwindcss";
+
+.home-container {
+  @apply min-h-screen flex flex-col items-center bg-gray-50 text-gray-900 font-sans;
+}
+
+/* Header Section */
+/* Header Section */
+.home-header {
+  @apply w-full pt-12 pb-6 px-6 flex flex-col items-center justify-center;
+}
+
+.home-title {
+  @apply text-4xl font-extrabold tracking-tight text-gray-900 mb-2;
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.home-subtitle {
+  @apply text-lg text-gray-500 font-medium;
+}
+
+/* Main Actions - Hero Cards */
+.main-actions {
+  @apply w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 px-6 mt-4;
+}
+
+.action-card {
+  @apply relative overflow-hidden rounded-2xl p-6 shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl cursor-pointer flex flex-col justify-between h-40 border border-white/20;
+}
+
+.action-card-blue {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.action-card-green {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.action-card-icon-wrapper {
+  @apply bg-white/20 rounded-full w-12 h-12 flex items-center justify-center backdrop-blur-sm;
+}
+
+.action-card-title {
+  @apply text-2xl font-bold text-white mt-auto;
+}
+
+.action-card-description {
+  @apply text-blue-100 text-sm font-medium;
+}
+
+/* Active Games Section */
+.active-games-section {
+  @apply w-full max-w-4xl mt-12 px-6 flex-1 flex flex-col;
+}
+
+.section-header {
+  @apply flex items-center justify-between mb-6;
+}
+
+.section-title {
+  @apply text-xl font-bold text-gray-800 flex items-center gap-2;
+}
+
+.active-games-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+}
+
+.game-card {
+  @apply bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all duration-200 cursor-pointer flex flex-col justify-between h-full;
+}
+
+.game-card-header {
+  @apply flex justify-between items-start mb-3;
+}
+
+.game-card-title {
+  @apply text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1;
+}
+
+.game-card-badge {
+  @apply px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-700 tracking-wide uppercase;
+}
+
+.game-card-footer {
+  @apply flex justify-between items-end mt-4 pt-4 border-t border-gray-50;
+}
+
+.game-card-date {
+  @apply text-xs text-gray-400 font-medium flex items-center gap-1;
+}
+
+.game-card-arrow {
+  @apply w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all;
+}
+
+/* Empty State */
+.empty-state {
+  @apply flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-dashed border-gray-200;
+}
+
+.empty-state-icon {
+  @apply w-16 h-16 text-gray-200 mb-4;
+}
+
+.empty-state-text {
+  @apply text-gray-400 font-medium;
+}
+
+/* Dialog Styles */
+.dialog-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.dialog-content {
+  @apply bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh];
+}
+
+.dialog-header {
+  @apply px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50;
+}
+
+.dialog-title {
+  @apply text-xl font-bold text-gray-900;
+}
+
+.dialog-close {
+  @apply text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100 transition-colors;
+}
+
+.dialog-body {
+  @apply p-6 overflow-y-auto flex-1;
+}
+
+.dialog-footer {
+  @apply px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3;
+}
+
+/* Form Elements */
+.form-input {
+  @apply w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-800 placeholder-gray-400;
+}
+
+.player-search-input {
+  @apply w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all;
+}
+
+.player-list {
+  @apply mt-4 space-y-2 max-h-60 overflow-y-auto pr-1;
+}
+
+.player-item {
+  @apply flex items-center p-3 rounded-lg border border-transparent hover:bg-gray-50 transition-colors cursor-pointer select-none;
+}
+
+.player-item.selected {
+  @apply bg-blue-50 border-blue-200;
+}
+
+.player-checkbox {
+  @apply w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-colors mr-3;
+}
+
+.player-name {
+  @apply font-medium text-gray-700;
+}
+
+/* New Player Input */
+.new-player-wrapper {
+  @apply mt-3 flex gap-2;
+}
+
+.new-player-input {
+  @apply flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none;
+}
+
+.btn-new-player {
+  @apply px-3 py-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 font-medium transition-colors shadow-sm disabled:opacity-50;
+}
+
+/* Buttons */
+.btn-cancel {
+  @apply px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 bg-white;
+}
+
+.btn-create {
+  @apply px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md active:translate-y-0.5 transform;
+}
+
+/* Footer Button */
+.past-games-button {
+  @apply mt-8 mb-8 px-6 py-3 bg-white text-gray-800 font-semibold rounded-full shadow border border-gray-200 hover:bg-gray-50 hover:text-blue-600 hover:shadow-md transition-all flex items-center gap-2 whitespace-nowrap;
+}

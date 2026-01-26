@@ -1,6 +1,19 @@
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import {
+  TrophyIcon,
+  PlusIcon,
+  PlayIcon,
+  CalendarIcon,
+  UserGroupIcon,
+  XMarkIcon,
+  MagnifyingGlassIcon,
+  ClockIcon,
+  ArrowRightIcon,
+  TableCellsIcon
+} from '@heroicons/react/24/outline'
+import './Home.css'
 
 interface Table {
   id: number
@@ -149,181 +162,250 @@ export function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-white text-black">
+    <div className="home-container">
       {/* Header */}
-      <div className="w-full max-w-md text-center py-8">
-        <h1 className="text-4xl font-bold">
+      <header className="home-header">
+        <h1 className="home-title">
           Schafkopf Tracker
         </h1>
-      </div>
+        <p className="home-subtitle">Track your games and scores</p>
+      </header>
 
       {/* Main Actions */}
-      <div className="w-full max-w-md flex flex-col gap-4 px-4">
-        <button
-          onClick={() => navigate('/leaderboard')}
-          style={{ backgroundColor: '#3B82F6' }}
-          className="w-full p-4 text-white rounded-lg hover:opacity-90 transition-opacity"
-        >
-          Leaderboard
-        </button>
-        <button
+      <div className="main-actions">
+        <div
           onClick={() => setIsDialogOpen(true)}
-          style={{ backgroundColor: '#22C55E' }}
-          className="w-full p-4 text-white rounded-lg hover:opacity-90 transition-opacity"
+          className="action-card action-card-green"
         >
-          Create Game
-        </button>
+          <div className="action-card-icon-wrapper">
+            <PlusIcon className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="action-card-title">New Game</h2>
+            <p className="action-card-description">Start a new session</p>
+          </div>
+        </div>
+
+        <div
+          onClick={() => navigate('/leaderboard')}
+          className="action-card action-card-blue"
+        >
+          <div className="action-card-icon-wrapper">
+            <TrophyIcon className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="action-card-title">Leaderboard</h2>
+            <p className="action-card-description">View active rankings</p>
+          </div>
+        </div>
       </div>
 
       {/* Active Games Section */}
-      <div className="w-full max-w-md mt-12 px-4">
-        <h2 className="text-2xl font-semibold mb-4 text-center">
-          Active Games
-        </h2>
+      <div className="active-games-section">
+        <div className="section-header">
+          <h2 className="section-title">
+            <PlayIcon className="w-5 h-5 text-blue-600" />
+            Active Games
+          </h2>
+        </div>
+
         {loading ? (
-          <div className="text-center text-gray-600">Loading...</div>
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
         ) : activeTables.length === 0 ? (
-          <div className="text-center text-gray-600">No active games</div>
+          <div className="empty-state">
+            <TableCellsIcon className="empty-state-icon" />
+            <p className="empty-state-text">No active games found</p>
+            <button
+              onClick={() => setIsDialogOpen(true)}
+              className="mt-4 text-blue-600 font-medium hover:underline"
+            >
+              Start a new game
+            </button>
+          </div>
         ) : (
-          <div className="space-y-3">
+          <div className="active-games-grid">
             {activeTables.map((table) => (
-              <button
+              <div
                 key={table.id}
                 onClick={() => navigate(`/game-details/${table.id}`)}
-                style={{ backgroundColor: '#1F1F1F' }}
-                className="w-full p-4 text-left rounded-lg hover:opacity-90 transition-opacity"
+                className="game-card group"
               >
-                <div className="font-medium text-white">{table.name}</div>
-                <div className="text-sm text-gray-400">
-                  Created {new Date(table.created_at).toLocaleDateString()}
+                <div>
+                  <div className="game-card-header">
+                    <span className="game-card-badge">Active</span>
+                  </div>
+                  <div className="game-card-title">{table.name}</div>
                 </div>
-              </button>
+
+                <div className="game-card-footer">
+                  <div className="game-card-date">
+                    <CalendarIcon className="w-4 h-4" />
+                    {new Date(table.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="game-card-arrow">
+                    <ArrowRightIcon className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         )}
       </div>
 
+      {/* Past Games Floating Button */}
+      <button
+        onClick={() => navigate('/past-games')}
+        className="past-games-button"
+      >
+        <ClockIcon className="w-5 h-5" />
+        <span>Past Games</span>
+      </button>
+
       {/* Create Game Dialog */}
       {isDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Start New Game</h2>
+        <div className="dialog-overlay">
+          <div className="dialog-content animate-in fade-in zoom-in-95 duration-200">
+            <div className="dialog-header">
+              <h2 className="dialog-title">Start New Game</h2>
+              <button
+                onClick={() => setIsDialogOpen(false)}
+                className="dialog-close"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
 
-            <form onSubmit={handleCreateTable} className="flex-1 overflow-hidden flex flex-col">
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Game Name</label>
-                <input
-                  type="text"
-                  value={tableName}
-                  onChange={(e) => setTableName(e.target.value)}
-                  placeholder="e.g. Monday Night Schafkopf"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
-                  autoFocus
-                />
-              </div>
+            <form onSubmit={handleCreateTable} className="flex flex-col flex-1 overflow-hidden">
+              <div className="dialog-body">
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Game Name
+                  </label>
+                  <input
+                    type="text"
+                    value={tableName}
+                    onChange={(e) => setTableName(e.target.value)}
+                    placeholder="e.g. Friday Night Rounds"
+                    className="form-input"
+                    autoFocus
+                  />
+                </div>
 
-              <div className="mb-6 flex-1 overflow-hidden flex flex-col">
-                <div className="flex flex-col gap-2 mb-3">
-                  <div className="flex justify-between items-center">
-                    <label className="block text-sm font-medium text-gray-700">Select Players</label>
-                    <span className={`text-sm ${selectedPlayerIds.includes(players.find(p => p.id === selectedPlayerIds[0])?.id || -1) ? 'text-green-600' : 'text-gray-500'}`}>
+                <div className="flex flex-col h-[300px]">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <UserGroupIcon className="w-4 h-4" />
+                      Select Players
+                    </label>
+                    <span className="text-xs font-medium px-2 py-1 bg-blue-50 text-blue-700 rounded-full">
                       {selectedPlayerIds.length} selected
                     </span>
                   </div>
 
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Search players..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowAddPlayerInput(!showAddPlayerInput)}
-                      className="px-3 py-2 text-sm text-green-600 font-medium border border-green-600 rounded-lg hover:bg-green-50 transition-colors whitespace-nowrap"
-                    >
-                      + New
-                    </button>
-                  </div>
-                </div>
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 flex flex-col flex-1 overflow-hidden">
+                    <div className="relative mb-2">
+                      <MagnifyingGlassIcon className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="Search players..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="player-search-input pl-9"
+                      />
+                    </div>
 
-                {showAddPlayerInput && (
-                  <div className="flex gap-2 mb-3 bg-green-50 p-3 rounded-lg border border-green-100">
-                    <input
-                      type="text"
-                      value={newPlayerName}
-                      onChange={(e) => setNewPlayerName(e.target.value)}
-                      placeholder="New Player Name"
-                      className="flex-1 px-3 py-2 border rounded-lg text-sm"
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          handleAddPlayer(e)
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddPlayer}
-                      disabled={!newPlayerName.trim()}
-                      className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
-                    >
-                      Save
-                    </button>
-                  </div>
-                )}
-
-                <div className="border border-gray-200 rounded-lg overflow-y-auto flex-1 p-2 space-y-1 bg-gray-50 min-h-[150px] max-h-[300px]">
-                  {loadingPlayers ? (
-                    <div className="text-center py-4 text-gray-500">Loading players...</div>
-                  ) : filteredPlayers.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <p>No players found.</p>
-                      {searchTerm && (
-                        <p className="text-xs mt-1">Try adding a new player.</p>
+                    <div className="player-list custom-scrollbar">
+                      {loadingPlayers ? (
+                        <div className="text-center py-8 text-gray-400 text-sm">Loading players...</div>
+                      ) : filteredPlayers.length === 0 ? (
+                        <div className="text-center py-8 text-gray-400 text-sm">
+                          <p>No players found</p>
+                        </div>
+                      ) : (
+                        filteredPlayers.map((player) => (
+                          <div
+                            key={player.id}
+                            onClick={() => togglePlayerSelection(player.id)}
+                            className={`player-item ${selectedPlayerIds.includes(player.id) ? 'selected' : ''}`}
+                          >
+                            <div className={`w-5 h-5 rounded-md border flex items-center justify-center mr-3 transition-colors ${selectedPlayerIds.includes(player.id)
+                              ? 'bg-blue-600 border-blue-600'
+                              : 'border-gray-300 bg-white'
+                              }`}>
+                              {selectedPlayerIds.includes(player.id) && (
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-white">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </div>
+                            <span className="player-name">{player.name}</span>
+                          </div>
+                        ))
                       )}
                     </div>
+                  </div>
+
+                  {!showAddPlayerInput ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowAddPlayerInput(true)}
+                      className="mt-3 text-sm text-blue-600 font-medium hover:text-blue-700 flex items-center gap-1 self-start ml-1"
+                    >
+                      <PlusIcon className="w-4 h-4" /> Add new player
+                    </button>
                   ) : (
-                    filteredPlayers.map((player) => (
-                      <label
-                        key={player.id}
-                        className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedPlayerIds.includes(player.id)
-                          ? 'bg-green-50 border-green-200 border'
-                          : 'hover:bg-white border border-transparent'
-                          }`}
+                    <div className="new-player-wrapper animate-in fade-in slide-in-from-top-2 duration-200">
+                      <input
+                        type="text"
+                        value={newPlayerName}
+                        onChange={(e) => setNewPlayerName(e.target.value)}
+                        placeholder="New Player Name"
+                        className="new-player-input"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            handleAddPlayer(e)
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddPlayer}
+                        disabled={!newPlayerName.trim()}
+                        className="btn-new-player"
                       >
-                        <input
-                          type="checkbox"
-                          checked={selectedPlayerIds.includes(player.id)}
-                          onChange={() => togglePlayerSelection(player.id)}
-                          className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 accent-green-600 bg-white mr-3"
-                        />
-                        <span className="font-medium text-gray-800">{player.name}</span>
-                      </label>
-                    ))
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddPlayerInput(false)
+                          setNewPlayerName('')
+                        }}
+                        className="p-2 text-gray-400 hover:text-gray-600"
+                      >
+                        <XMarkIcon className="w-5 h-5" />
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
 
-              <div className="flex gap-3 justify-end pt-4 border-t">
+              <div className="dialog-footer">
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsDialogOpen(false)
-                    setTableName('')
-                    setSelectedPlayerIds([])
-                  }}
-                  className="px-6 py-2.5 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-colors"
+                  onClick={() => setIsDialogOpen(false)}
+                  className="btn-cancel"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={!tableName.trim() || selectedPlayerIds.length === 0}
-                  className="px-6 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                  disabled={!tableName.trim()}
+                  className="btn-create"
                 >
                   Create Game
                 </button>
@@ -332,17 +414,6 @@ export function Home() {
           </div>
         </div>
       )}
-
-      {/* Footer - Past Games Button */}
-      <div className="w-full max-w-md px-4 py-8 mt-auto fixed bottom-0 bg-white">
-        <button
-          onClick={() => navigate('/past-games')}
-          style={{ backgroundColor: '#1F2937' }}
-          className="w-full p-4 text-white rounded-lg hover:opacity-90 transition-opacity"
-        >
-          Past Games
-        </button>
-      </div>
     </div>
   )
-} 
+}

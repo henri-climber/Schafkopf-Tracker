@@ -7,6 +7,14 @@
   text-align: center;
 }
 
+.app-container {
+  @apply min-h-screen w-full bg-white;
+}
+
+.main-content {
+  @apply container mx-auto px-4;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;

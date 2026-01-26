@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+.past-games-container {
+  @apply flex flex-col min-h-screen bg-white text-black;
+}
+
+.past-games-header {
+  @apply p-4 border-b;
+}
+
+.past-games-title {
+  @apply text-2xl font-bold text-center;
+}
+
+.past-games-content {
+  @apply flex-1 p-4;
+}
+
+.past-games-list {
+  @apply max-w-md mx-auto space-y-3;
+}
+
+.past-game-card {
+  @apply w-full p-4 text-left rounded-lg hover:opacity-90 transition-opacity relative;
+  background-color: #1F1F1F;
+}
+
+.past-game-name {
+  @apply font-medium text-white;
+}
+
+.past-game-date {
+  @apply text-sm text-gray-400;
+}
+
+.past-game-badge {
+  @apply absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium;
+}
+
+.past-game-badge-excluded {
+  @apply bg-yellow-600 text-white;
+}
+
+.past-game-badge-included {
+  @apply bg-green-600 text-white;
+}

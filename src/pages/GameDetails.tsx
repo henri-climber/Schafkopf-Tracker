@@ -7,6 +7,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import './GameDetails.css';
 
 interface GameTable {
   id: number;
@@ -186,12 +187,12 @@ export function GameDetails() {
         const sum = Object.values(info.row.original.scores).reduce((a, b) => a + b, 0);
         const isInvalid = sum !== 0;
         return (
-          <div className="flex items-center justify-center gap-1">
-            <span className={`text-sm font-mono ${isInvalid ? 'text-red-600 font-bold' : 'text-gray-400'}`}>
+          <div className="round-number-cell">
+            <span className={`round-number-text ${isInvalid ? 'round-number-invalid' : ''}`}>
               {info.getValue()}
             </span>
             {isInvalid && (
-              <span title={`Sum is ${sum} (should be 0)`} className="text-red-500 text-xs cursor-help font-bold">
+              <span title={`Sum is ${sum} (should be 0)`} className="round-error-icon">
                 !
               </span>
             )}
@@ -205,11 +206,11 @@ export function GameDetails() {
       columnHelper.accessor(row => row.scores[player.id], {
         id: `player_${player.id}`,
         header: () => (
-          <div className="flex flex-col items-center py-2">
-            <span className="font-bold text-gray-800">{player.name}</span>
-            <span className={`text-sm mt-1 font-mono font-medium px-2 py-0.5 rounded ${playerTotals[player.id] > 0 ? 'bg-green-100 text-green-700' :
-              playerTotals[player.id] < 0 ? 'bg-red-100 text-red-700' :
-                'bg-gray-100 text-gray-600'
+          <div className="player-header">
+            <span className="player-name">{player.name}</span>
+            <span className={`player-total-badge ${playerTotals[player.id] > 0 ? 'total-positive' :
+              playerTotals[player.id] < 0 ? 'total-negative' :
+                'total-neutral'
               }`}>
               {playerTotals[player.id] > 0 ? '+' : ''}{playerTotals[player.id]}
             </span>
@@ -222,14 +223,14 @@ export function GameDetails() {
 
           return (
             <div
-              className="h-full w-full flex items-center justify-center p-1"
+              className="score-cell"
               onClick={() => setEditingCell({ roundId: info.row.original.roundId, playerId: player.id })}
             >
               {isEditing ? (
                 <input
                   type="number"
                   defaultValue={score === 0 ? '' : score}
-                  className="w-16 text-center bg-white border-2 border-blue-500 rounded px-1 py-1 text-lg font-mono focus:outline-none shadow-lg z-10"
+                  className="score-input"
                   autoFocus
                   onBlur={(e) => {
                     const val = calculateScoreInput(e.target.value);
@@ -245,9 +246,9 @@ export function GameDetails() {
                   }}
                 />
               ) : (
-                <span className={`text-lg font-mono font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-50 px-3 py-1 rounded transition-colors ${score > 0 ? 'text-green-600' :
-                  score < 0 ? 'text-red-600' :
-                    'text-gray-300'
+                <span className={`score-display ${score > 0 ? 'score-positive' :
+                  score < 0 ? 'score-negative' :
+                    'score-zero'
                   }`}>
                   {score === 0 ? '-' : score > 0 ? `+${score}` : score}
                 </span>
@@ -403,32 +404,32 @@ export function GameDetails() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20">
+    <div className="game-details-container">
       {/* Navbar / Header */}
-      <div className="bg-white border-b sticky top-0 z-20 shadow-sm px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="game-navbar">
+        <div className="nav-left">
           <button
             onClick={() => navigate('/')}
-            className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"
+            className="nav-back-button"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>
-          <div>
-            <h1 className="font-bold text-lg leading-tight">{gameTable?.name}</h1>
-            <p className="text-xs text-gray-500">
+          <div className="nav-title-group">
+            <h1 className="game-title">{gameTable?.name}</h1>
+            <p className="game-subtitle">
               {new Date(gameTable?.created_at || '').toLocaleDateString()} • {rounds.length} Rounds
             </p>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="nav-right">
           <button
             onClick={handleToggleIsOpen}
-            className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${gameTable?.is_open
-              ? 'bg-green-100 text-green-700 hover:bg-green-200'
-              : 'bg-red-100 text-red-700 hover:bg-red-200'
+            className={`status-button ${gameTable?.is_open
+              ? 'status-button-open'
+              : 'status-button-closed'
               }`}
           >
             {gameTable?.is_open ? 'Open' : 'Closed'}
@@ -436,9 +437,9 @@ export function GameDetails() {
 
           <button
             onClick={handleToggleExcludeFromOverall}
-            className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${gameTable?.exclude_from_overall
-              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            className={`status-button ${gameTable?.exclude_from_overall
+              ? 'status-button-excluded'
+              : 'status-button-included'
               }`}
           >
             {gameTable?.exclude_from_overall ? 'Excluded' : 'Included'}
@@ -449,7 +450,7 @@ export function GameDetails() {
               setIsAddingPlayer(true);
               searchPlayers('');
             }}
-            className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-50 transition-colors"
+            className="btn-add-player-nav"
           >
             Add Player
           </button>
@@ -457,7 +458,7 @@ export function GameDetails() {
           {gameTable?.is_open && (
             <button
               onClick={handleAddRound}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="btn-add-round"
             >
               <span className="text-xl leading-none">+</span> Round
             </button>
@@ -466,29 +467,29 @@ export function GameDetails() {
       </div>
 
       {/* Main Score Sheet */}
-      <div className="max-w-4xl mx-auto p-4">
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-gray-50 border-b-2 border-gray-100">
+      <div className="main-score-sheet">
+        <div className="score-table-container">
+          <div className="score-table-wrapper">
+            <table className="score-table">
+              <thead className="table-header">
                 {table.getHeaderGroups().map(headerGroup => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map(header => (
-                      <th key={header.id} className="p-2 min-w-[100px] first:min-w-[50px] first:w-[50px]">
+                      <th key={header.id} className="table-th">
                         {flexRender(header.column.columnDef.header, header.getContext())}
                       </th>
                     ))}
                   </tr>
                 ))}
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="table-body">
                 {table.getRowModel().rows.map(row => {
                   const sum = Object.values(row.original.scores).reduce((a, b) => a + b, 0);
                   const isInvalid = sum !== 0;
                   return (
-                    <tr key={row.id} className={`transition-colors ${isInvalid ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}`}>
+                    <tr key={row.id} className={`table-row ${isInvalid ? 'table-row-invalid' : ''}`}>
                       {row.getVisibleCells().map(cell => (
-                        <td key={cell.id} className="p-0 border-r border-gray-50 last:border-0 text-center h-12">
+                        <td key={cell.id} className="table-td">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </td>
                       ))}
@@ -503,11 +504,11 @@ export function GameDetails() {
           </div>
 
           {rounds.length === 0 && (
-            <div className="text-center py-12 text-gray-400">
+            <div className="empty-state">
               <p>No rounds played yet.</p>
               <button
                 onClick={handleAddRound}
-                className="mt-4 text-blue-600 hover:underline"
+                className="empty-state-btn"
               >
                 Start the game
               </button>
@@ -518,9 +519,9 @@ export function GameDetails() {
 
       {/* Add Player Modal */}
       {isAddingPlayer && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-96">
-            <h2 className="text-lg font-bold mb-4">Add Player</h2>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2 className="modal-title">Add Player</h2>
             <input
               value={searchTerm}
               onChange={e => {
@@ -528,31 +529,31 @@ export function GameDetails() {
                 searchPlayers(e.target.value);
               }}
               placeholder="Search player name..."
-              className="border w-full px-3 py-2 rounded mb-3"
+              className="modal-search-input"
               autoFocus
             />
             {searchLoading ? (
-              <p className="text-gray-500 text-center py-4">Loading...</p>
+              <p className="modal-loading">Loading...</p>
             ) : (
-              <div className="space-y-1 max-h-48 overflow-y-auto">
+              <div className="modal-list-container">
                 {availablePlayers.length === 0 && searchTerm && (
-                  <p className="text-gray-500 text-center py-2">No players found</p>
+                  <p className="modal-empty-search">No players found</p>
                 )}
                 {availablePlayers.map(player => (
                   <button
                     key={player.id}
                     onClick={() => handleAddPlayerToGame(player.id)}
-                    className="block w-full text-left px-3 py-2 hover:bg-gray-100 rounded"
+                    className="modal-player-btn"
                   >
                     {player.name}
                   </button>
                 ))}
               </div>
             )}
-            <div className="flex justify-end mt-4">
+            <div className="modal-footer">
               <button
                 onClick={() => setIsAddingPlayer(false)}
-                className="text-gray-600 hover:text-gray-800"
+                className="modal-cancel-btn"
               >
                 Cancel
               </button>

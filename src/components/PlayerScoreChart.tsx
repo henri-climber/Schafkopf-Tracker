@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { supabase } from '../lib/supabase'
+import './PlayerScoreChart.css'
 
 interface PlayerData {
   id: number
@@ -192,14 +193,14 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
     }
   }
 
-  if (loading) return <div className="text-center p-4">Loading chart data...</div>
-  if (error) return <div className="text-center text-red-500 p-4">Error: {error}</div>
-  if (!chartData.length) return <div className="text-center p-4">No data available for the chart</div>
+  if (loading) return <div className="chart-loading">Loading chart data...</div>
+  if (error) return <div className="chart-error">Error: {error}</div>
+  if (!chartData.length) return <div className="chart-no-data">No data available for the chart</div>
 
   return (
-    <div className="mt-8 px-4">
-      <h2 className="text-xl font-semibold mb-4 text-center">Score Progression</h2>
-      <div className="w-full h-[500px]">
+    <div className="chart-container">
+      <h2 className="chart-title">Score Progression</h2>
+      <div className="chart-wrapper">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
