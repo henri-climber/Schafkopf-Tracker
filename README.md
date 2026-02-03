@@ -57,6 +57,8 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 npm run dev
 ```
 
+Main is automatically deployed via vercel.
+
 
 ## Project Structure
 
