@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useGameSubscription } from '../hooks/useGameSubscription';
 import { supabase } from '../lib/supabase';
 import {
   createColumnHelper,
@@ -74,18 +75,6 @@ export function GameDetails() {
   // Scroll to bottom ref
   const bottomRef = useRef<HTMLTableRowElement>(null);
 
-  useEffect(() => {
-    if (!id) return;
-    loadGameData();
-  }, [id]);
-
-  // Scroll to bottom when rounds change
-  useEffect(() => {
-    if (rounds.length > 0) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [rounds.length]);
-
   const loadGameData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -144,6 +133,46 @@ export function GameDetails() {
       setLoading(false);
     }
   }, [id]);
+
+  const handleScoreUpdateRealtime = useCallback((newScore: RoundScore) => {
+    setRoundScores(prev => {
+      // Check if we already have this score
+      const index = prev.findIndex(s => s.round_id === newScore.round_id && s.player_id === newScore.player_id);
+
+      if (index >= 0) {
+        // Update existing score
+        const newScores = [...prev];
+        newScores[index] = { ...prev[index], raw_score: newScore.raw_score };
+        return newScores;
+      } else {
+        // Add new score
+        return [...prev, newScore];
+      }
+    });
+  }, []);
+
+  useGameSubscription({
+    gameId: id || '',
+    roundIds: useMemo(() => rounds.map(r => r.id), [rounds]),
+    onGameUpdate: loadGameData,
+    onPlayerUpdate: loadGameData,
+    onRoundsUpdate: loadGameData,
+    onScoreUpdate: handleScoreUpdateRealtime,
+  });
+
+  useEffect(() => {
+    if (!id) return;
+    loadGameData();
+  }, [id]);
+
+  // Scroll to bottom when rounds change
+  useEffect(() => {
+    if (rounds.length > 0) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [rounds.length]);
+
+
 
   // Transform data for the table
   const tableData = useMemo(() => {
