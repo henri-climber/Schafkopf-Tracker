@@ -21,7 +21,7 @@ interface Semester {
 const SEMESTERS: Semester[] = [
   {
     id: 'sem1',
-    label: 'Semester 1 (Sep 2024 - March 2025)',
+    label: 'Semester 1 (September 2024 - March 2025)',
     startDate: '2024-09-01T00:00:00.000Z',
     endDate: '2025-03-31T23:59:59.999Z'
   },
@@ -33,9 +33,15 @@ const SEMESTERS: Semester[] = [
   },
   {
     id: 'sem3',
-    label: 'Semester 3 (Sep 2025 - Apr 2026)',
+    label: 'Semester 3 (September 2025 - April 2026)',
     startDate: '2025-09-01T00:00:00.000Z',
-    endDate: '2026-04-30T23:59:59.999Z'
+    endDate: '2026-02-27T23:59:59.999Z'
+  },
+  {
+    id: 'sem4',
+    label: 'Semester 4 (April 2026 - October 2026)',
+    startDate: '2026-02-28T00:00:00.000Z',
+    endDate: '2026-09-30T23:59:59.999Z'
   }
 ]
 
@@ -65,6 +71,7 @@ export function Leaderboard() {
   const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEMESTERS[0]
 
   useEffect(() => {
+    console.log(selectedSemester)
     loadLeaderboard()
   }, [includeOngoing, selectedSemesterId])
 
