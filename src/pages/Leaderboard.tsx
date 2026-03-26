@@ -187,14 +187,7 @@ export function Leaderboard() {
           }
           return player
         })
-        .filter(player => {
-          // Remove Danilo from Semester 3 onwards
-          if (selectedSemester.id === 'sem3' && player.name === 'Danilo') {
-            return false
-          }
-          // Hide players with no games in the selected semester
-          return player.gamesPlayed > 0
-        })
+        .filter(player => player.gamesPlayed > 0)
         .sort((a, b) => b.totalScore - a.totalScore)
 
       setPlayers(sortedPlayers)
