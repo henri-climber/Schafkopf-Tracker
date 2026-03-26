@@ -27,14 +27,22 @@ interface ChartData {
 }
 
 const COLORS = [
-  '#2563eb', // blue-600
-  '#dc2626', // red-600
-  '#16a34a', // green-600
-  '#9333ea', // purple-600
-  '#ea580c', // orange-600
-  '#0891b2', // cyan-600
-  '#4f46e5', // indigo-600
-  '#c026d3', // fuchsia-600
+  '#E63946', // Rot
+  '#F3722C', // Orange
+  '#F9C74F', // Gelb
+  '#90BE6D', // Hellgrün
+  '#43AA8B', // Türkisgrün
+  '#4D908E', // Türkis
+  '#577590', // Blaugrau
+  '#277DA1', // Blau
+  '#4361EE', // Königsblau
+  '#3A0CA3', // Indigo
+  '#7209B7', // Violett
+  '#B5179E', // Magenta
+  '#F72585', // Pink
+  '#FF99C8', // Hellpink
+  '#9D4EDD', // Lavendel
+  '#00BBF9', // Cyan
 ]
 
 // Helper function to format timestamps
@@ -244,7 +252,7 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
               }}
               iconType="circle"
             />
-            {players.map((player) => (
+            {players.filter(player => player.scores.length > 0).map((player) => (
               <Line
                 key={player.id}
                 type="linear"
