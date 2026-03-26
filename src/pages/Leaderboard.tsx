@@ -66,7 +66,7 @@ export function Leaderboard() {
   const [isAddingPlayer, setIsAddingPlayer] = useState(false)
   const [newPlayerName, setNewPlayerName] = useState('')
   const [includeOngoing, setIncludeOngoing] = useState(false)
-  const [selectedSemesterId, setSelectedSemesterId] = useState<string>(SEMESTERS[2].id)
+  const [selectedSemesterId, setSelectedSemesterId] = useState<string>(SEMESTERS[SEMESTERS.length - 1].id)
 
   const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEMESTERS[0]
 
@@ -192,7 +192,8 @@ export function Leaderboard() {
           if (selectedSemester.id === 'sem3' && player.name === 'Danilo') {
             return false
           }
-          return true
+          // Hide players with no games in the selected semester
+          return player.gamesPlayed > 0
         })
         .sort((a, b) => b.totalScore - a.totalScore)
 
