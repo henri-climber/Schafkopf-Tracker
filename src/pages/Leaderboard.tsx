@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { PlayerScoreChart } from '../components/PlayerScoreChart'
 import './Leaderboard.css'
@@ -60,6 +61,7 @@ const SEMESTER_3_OFFSETS: Record<string, number> = {
 
 
 export function Leaderboard() {
+  const navigate = useNavigate()
   const [players, setPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -237,34 +239,67 @@ export function Leaderboard() {
       {/* Header Section */}
       <div className="header-sticky">
         <div className="header-content">
-          <div className="header-row">
-            <h1 className="page-title">
-              Leaderboard
-            </h1>
 
-            <div className="controls-group">
-              <select
-                value={selectedSemesterId}
-                onChange={(e) => setSelectedSemesterId(e.target.value)}
-                className="semester-select"
-              >
-                {SEMESTERS.map((semester) => (
-                  <option key={semester.id} value={semester.id}>
-                    {semester.label}
-                  </option>
-                ))}
-              </select>
-
-              <button
-                onClick={() => setIsAddingPlayer(true)}
-                className="add-player-btn"
-                title="Add Player"
-              >
+          {/* Mobile layout (< 800px) */}
+          <div className="mobile-header">
+            <h1 className="page-title">Leaderboard</h1>
+            <select
+              value={selectedSemesterId}
+              onChange={(e) => setSelectedSemesterId(e.target.value)}
+              className="semester-select"
+            >
+              {SEMESTERS.map((semester) => (
+                <option key={semester.id} value={semester.id}>
+                  {semester.label}
+                </option>
+              ))}
+            </select>
+            <div className="mobile-action-row">
+              <button onClick={() => navigate('/')} className="back-btn" title="Zurück zur Hauptansicht">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button onClick={() => setIsAddingPlayer(true)} className="add-player-btn" title="Add Player">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 <span>Add Player</span>
               </button>
+            </div>
+          </div>
+
+          {/* Desktop layout (>= 800px) */}
+          <div className="desktop-header">
+            {/* Row 1: Title centered */}
+            <h1 className="page-title desktop-title">Leaderboard</h1>
+
+            {/* Row 2: Back left | Semester + Add Player right */}
+            <div className="desktop-controls-row">
+              <button onClick={() => navigate('/')} className="back-btn" title="Zurück zur Hauptansicht">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="controls-group">
+                <select
+                  value={selectedSemesterId}
+                  onChange={(e) => setSelectedSemesterId(e.target.value)}
+                  className="semester-select"
+                >
+                  {SEMESTERS.map((semester) => (
+                    <option key={semester.id} value={semester.id}>
+                      {semester.label}
+                    </option>
+                  ))}
+                </select>
+                <button onClick={() => setIsAddingPlayer(true)} className="add-player-btn" title="Add Player">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Add Player</span>
+                </button>
+              </div>
             </div>
           </div>
 
