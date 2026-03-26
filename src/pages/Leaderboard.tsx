@@ -189,7 +189,7 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
           return player
         })
         .filter(player => player.gamesPlayed > 0)
-        .sort((a, b) => b.totalScore - a.totalScore)
+        .sort((a, b) => b.totalScore - a.totalScore || b.gamesPlayed - a.gamesPlayed || a.name.localeCompare(b.name))
 
       setPlayers(sortedPlayers)
     } catch (err) {
