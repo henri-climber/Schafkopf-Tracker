@@ -18,7 +18,7 @@
 
 /* Header Section */
 .header-sticky {
-    @apply bg-white shadow-sm border-b sticky top-0 z-20;
+    @apply bg-white sticky top-0 z-20 min-[800px]:shadow-none;
 }
 
 .header-content {
@@ -28,6 +28,10 @@
 /* Mobile header: visible only below 800px */
 .mobile-header {
     @apply flex flex-col gap-3 min-[800px]:hidden;
+}
+
+.mobile-scrollable-controls {
+    @apply flex flex-col gap-3 min-[800px]:hidden bg-white px-2 py-3;
 }
 
 .mobile-action-row {
@@ -40,8 +44,13 @@
 }
 
 .desktop-title {
-    @apply text-center w-full;
+    @apply hidden min-[800px]:block text-center w-full;
 }
+
+.desktop-scrollable-controls {
+    @apply hidden min-[800px]:block bg-white;
+}
+
 
 .desktop-controls-row {
     @apply flex items-center justify-between;

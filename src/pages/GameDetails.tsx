@@ -74,6 +74,7 @@ export function GameDetails() {
 
   // Scroll to bottom ref
   const bottomRef = useRef<HTMLTableRowElement>(null);
+  const isTabNavigating = useRef(false);
 
   const loadGameData = useCallback(async () => {
     setLoading(true);
@@ -262,6 +263,10 @@ export function GameDetails() {
                   className="score-input"
                   autoFocus
                   onBlur={(e) => {
+                    if (isTabNavigating.current) {
+                      isTabNavigating.current = false;
+                      return;
+                    }
                     const val = calculateScoreInput(e.target.value);
                     handleScoreUpdate(info.row.original.roundId, player.id, val);
                     setEditingCell(null);
@@ -271,6 +276,18 @@ export function GameDetails() {
                       const val = calculateScoreInput((e.target as HTMLInputElement).value);
                       handleScoreUpdate(info.row.original.roundId, player.id, val);
                       setEditingCell(null);
+                    } else if (e.key === 'Tab') {
+                      e.preventDefault();
+                      const val = calculateScoreInput((e.target as HTMLInputElement).value);
+                      handleScoreUpdate(info.row.original.roundId, player.id, val);
+                      const currentIndex = players.findIndex(p => p.id === player.id);
+                      const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
+                      if (nextIndex >= 0 && nextIndex < players.length) {
+                        isTabNavigating.current = true;
+                        setEditingCell({ roundId: info.row.original.roundId, playerId: players[nextIndex].id });
+                      } else {
+                        setEditingCell(null);
+                      }
                     }
                   }}
                 />

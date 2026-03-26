@@ -222,8 +222,7 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
 
   return (
     <div className="chart-container">
-      <h2 className="chart-title">Score Progression</h2>
-      <div className="chart-wrapper">
+<div className="chart-wrapper">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}

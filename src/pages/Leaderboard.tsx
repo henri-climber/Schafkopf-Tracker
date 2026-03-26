@@ -69,8 +69,7 @@ export function Leaderboard() {
   const [newPlayerName, setNewPlayerName] = useState('')
   const [includeOngoing, setIncludeOngoing] = useState(false)
   const [selectedSemesterId, setSelectedSemesterId] = useState<string>(SEMESTERS[SEMESTERS.length - 1].id)
-
-  const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEMESTERS[0]
+const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEMESTERS[0]
 
   useEffect(() => {
     console.log(selectedSemester)
@@ -240,26 +239,79 @@ export function Leaderboard() {
       <div className="header-sticky">
         <div className="header-content">
 
-          {/* Mobile layout (< 800px) */}
+          {/* Mobile layout (< 800px): only title stays sticky */}
           <div className="mobile-header">
             <h1 className="page-title">Leaderboard</h1>
-            <select
-              value={selectedSemesterId}
-              onChange={(e) => setSelectedSemesterId(e.target.value)}
-              className="semester-select"
-            >
-              {SEMESTERS.map((semester) => (
-                <option key={semester.id} value={semester.id}>
-                  {semester.label}
-                </option>
-              ))}
-            </select>
-            <div className="mobile-action-row">
-              <button onClick={() => navigate('/')} className="back-btn" title="Zurück zur Hauptansicht">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
+          </div>
+
+          {/* Desktop layout (>= 800px): only title stays sticky */}
+          <h1 className="page-title desktop-title">Leaderboard</h1>
+        </div>
+      </div>
+
+      {/* Mobile controls: scrolls away on scroll */}
+      <div className="mobile-scrollable-controls">
+        <select
+          value={selectedSemesterId}
+          onChange={(e) => setSelectedSemesterId(e.target.value)}
+          className="semester-select"
+        >
+          {SEMESTERS.map((semester) => (
+            <option key={semester.id} value={semester.id}>
+              {semester.label}
+            </option>
+          ))}
+        </select>
+        <div className="mobile-action-row">
+          <button onClick={() => navigate('/')} className="back-btn" title="Zurück zur Hauptansicht">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button onClick={() => setIsAddingPlayer(true)} className="add-player-btn" title="Add Player">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Add Player</span>
+          </button>
+        </div>
+        <div className="toggle-wrapper">
+          <label className="toggle-label">
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={includeOngoing}
+                onChange={(e) => setIncludeOngoing(e.target.checked)}
+                className="toggle-input peer"
+              />
+              <div className="toggle-switch"></div>
+            </div>
+            <span className="toggle-text">Include ongoing games</span>
+          </label>
+        </div>
+      </div>
+
+      {/* Desktop controls: scrolls away on scroll */}
+      <div className="desktop-scrollable-controls">
+        <div className="header-content">
+          <div className="desktop-controls-row">
+            <button onClick={() => navigate('/')} className="back-btn" title="Zurück zur Hauptansicht">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="controls-group">
+              <select
+                value={selectedSemesterId}
+                onChange={(e) => setSelectedSemesterId(e.target.value)}
+                className="semester-select"
+              >
+                {SEMESTERS.map((semester) => (
+                  <option key={semester.id} value={semester.id}>
+                    {semester.label}
+                  </option>
+                ))}
+              </select>
               <button onClick={() => setIsAddingPlayer(true)} className="add-player-btn" title="Add Player">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -268,41 +320,6 @@ export function Leaderboard() {
               </button>
             </div>
           </div>
-
-          {/* Desktop layout (>= 800px) */}
-          <div className="desktop-header">
-            {/* Row 1: Title centered */}
-            <h1 className="page-title desktop-title">Leaderboard</h1>
-
-            {/* Row 2: Back left | Semester + Add Player right */}
-            <div className="desktop-controls-row">
-              <button onClick={() => navigate('/')} className="back-btn" title="Zurück zur Hauptansicht">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div className="controls-group">
-                <select
-                  value={selectedSemesterId}
-                  onChange={(e) => setSelectedSemesterId(e.target.value)}
-                  className="semester-select"
-                >
-                  {SEMESTERS.map((semester) => (
-                    <option key={semester.id} value={semester.id}>
-                      {semester.label}
-                    </option>
-                  ))}
-                </select>
-                <button onClick={() => setIsAddingPlayer(true)} className="add-player-btn" title="Add Player">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>Add Player</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
           <div className="toggle-wrapper">
             <label className="toggle-label">
               <div className="relative">
@@ -322,7 +339,7 @@ export function Leaderboard() {
         </div>
       </div>
 
-      {isAddingPlayer && (
+{isAddingPlayer && (
         <div className="modal-overlay">
           <form onSubmit={handleAddPlayer} className="modal-panel">
             <h3 className="modal-title">Add New Player</h3>
