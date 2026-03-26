@@ -45,7 +45,6 @@ const COLORS = [
   '#00BBF9', // Cyan
 ]
 
-// Helper function to format timestamps
 function formatTimestamp(timestamp: string) {
   const date = new Date(timestamp)
   return new Intl.DateTimeFormat('de-DE', {
@@ -53,6 +52,14 @@ function formatTimestamp(timestamp: string) {
     month: '2-digit',
     hour: '2-digit',
     minute: '2-digit'
+  }).format(date)
+}
+
+function formatDate(timestamp: string) {
+  const date = new Date(timestamp)
+  return new Intl.DateTimeFormat('de-DE', {
+    day: '2-digit',
+    month: '2-digit'
   }).format(date)
 }
 
@@ -66,6 +73,14 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
   const [players, setPlayers] = useState<PlayerScore[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 800)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 799px)')
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   useEffect(() => {
     loadChartData()
@@ -207,8 +222,7 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
 
   return (
     <div className="chart-container">
-      <h2 className="chart-title">Score Progression</h2>
-      <div className="chart-wrapper">
+<div className="chart-wrapper">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
@@ -221,7 +235,7 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
             />
             <XAxis
               dataKey="timestamp"
-              tickFormatter={formatTimestamp}
+              tickFormatter={isMobile ? formatDate : formatTimestamp}
               angle={-45}
               textAnchor="end"
               height={60}

@@ -18,15 +18,42 @@
 
 /* Header Section */
 .header-sticky {
-    @apply bg-white shadow-sm border-b sticky top-0 z-20;
+    @apply bg-white sticky top-0 z-20 min-[800px]:shadow-none;
 }
 
 .header-content {
     @apply max-w-[1000px] mx-auto px-2 min-[800px]:px-4 py-4;
 }
 
-.header-row {
-    @apply flex flex-col min-[800px]:flex-row items-center justify-between gap-4;
+/* Mobile header: visible only below 800px */
+.mobile-header {
+    @apply flex flex-col gap-3 min-[800px]:hidden;
+}
+
+.mobile-scrollable-controls {
+    @apply flex flex-col gap-3 min-[800px]:hidden bg-white px-2 py-3;
+}
+
+.mobile-action-row {
+    @apply flex flex-row items-center justify-between;
+}
+
+/* Desktop header: visible only from 800px */
+.desktop-header {
+    @apply hidden min-[800px]:flex flex-col gap-3;
+}
+
+.desktop-title {
+    @apply hidden min-[800px]:block text-center w-full;
+}
+
+.desktop-scrollable-controls {
+    @apply hidden min-[800px]:block bg-white;
+}
+
+
+.desktop-controls-row {
+    @apply flex items-center justify-between;
 }
 
 .page-title {
@@ -34,7 +61,7 @@
 }
 
 .controls-group {
-    @apply flex flex-col w-full min-[800px]:w-auto min-[800px]:flex-row items-center gap-3;
+    @apply flex flex-row items-center gap-3;
 }
 
 .semester-select {
@@ -42,7 +69,7 @@
 }
 
 .add-player-btn {
-    @apply w-full min-[800px]:w-auto justify-center flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium;
+    @apply flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium;
 }
 
 /* Toggle Switch */
@@ -267,4 +294,12 @@
 
 .chart-title {
     @apply text-lg font-bold mb-6 text-gray-800;
+}
+
+.back-btn {
+    @apply flex items-center justify-center w-9 h-9 rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors shadow-sm shrink-0;
+}
+
+.back-btn svg {
+    @apply w-5 h-5;
 }
