@@ -8,6 +8,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import { LockOpenIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import './GameDetails.css';
 
 interface GameTable {
@@ -71,9 +72,10 @@ export function GameDetails() {
   const [availablePlayers, setAvailablePlayers] = useState<AvailablePlayer[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [editingCell, setEditingCell] = useState<{ roundId: number; playerId: number } | null>(null);
+  const [expandedRoundId, setExpandedRoundId] = useState<number | null>(null);
 
   // Scroll to bottom ref
-  const bottomRef = useRef<HTMLTableRowElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const isTabNavigating = useRef(false);
 
   const loadGameData = useCallback(async () => {
@@ -262,6 +264,7 @@ export function GameDetails() {
                   defaultValue={score === 0 ? '' : score}
                   className="score-input"
                   autoFocus
+                  onFocus={(e) => e.target.select()}
                   onBlur={(e) => {
                     if (isTabNavigating.current) {
                       isTabNavigating.current = false;
@@ -368,6 +371,7 @@ export function GameDetails() {
 
     setRounds(prev => [...prev, newRound]);
     setRoundScores(prev => [...prev, ...initialScores.map(s => ({ ...s, created_at: new Date().toISOString() }))]);
+    setExpandedRoundId(newRound.id);
   };
 
   const handleToggleIsOpen = async () => {
@@ -473,22 +477,30 @@ export function GameDetails() {
         <div className="nav-right">
           <button
             onClick={handleToggleIsOpen}
+            title={gameTable?.is_open ? 'Open' : 'Closed'}
             className={`status-button ${gameTable?.is_open
               ? 'status-button-open'
               : 'status-button-closed'
               }`}
           >
-            {gameTable?.is_open ? 'Open' : 'Closed'}
+            <span className="status-icon-mobile">
+              {gameTable?.is_open
+                ? <LockOpenIcon className="w-5 h-5" />
+                : <LockClosedIcon className="w-5 h-5" />}
+            </span>
+            <span className="status-label-desktop">{gameTable?.is_open ? 'Open' : 'Closed'}</span>
           </button>
 
           <button
             onClick={handleToggleExcludeFromOverall}
+            title={gameTable?.exclude_from_overall ? 'Excluded' : 'Included'}
             className={`status-button ${gameTable?.exclude_from_overall
               ? 'status-button-excluded'
               : 'status-button-included'
               }`}
           >
-            {gameTable?.exclude_from_overall ? 'Excluded' : 'Included'}
+            <span className="status-icon-mobile">{gameTable?.exclude_from_overall ? '✕' : '✓'}</span>
+            <span className="status-label-desktop">{gameTable?.exclude_from_overall ? 'Excluded' : 'Included'}</span>
           </button>
 
           <button
@@ -498,7 +510,8 @@ export function GameDetails() {
             }}
             className="btn-add-player-nav"
           >
-            Add Player
+            <span className="min-[640px]:hidden">+P</span>
+            <span className="hidden min-[640px]:inline">Add Player</span>
           </button>
 
           {gameTable?.is_open && (
@@ -509,11 +522,29 @@ export function GameDetails() {
               <span className="text-xl leading-none">+</span> Round
             </button>
           )}
+
         </div>
+      </div>
+
+      {/* Mobile-only sticky totals bar */}
+      <div className="mobile-totals-bar">
+        {players.map(player => (
+          <div key={player.id} className="mobile-totals-item">
+            <span className="mobile-totals-name">{player.name}</span>
+            <span className={`mobile-totals-score ${
+              playerTotals[player.id] > 0 ? 'total-positive' :
+              playerTotals[player.id] < 0 ? 'total-negative' :
+              'total-neutral'
+            }`}>
+              {playerTotals[player.id] > 0 ? '+' : ''}{playerTotals[player.id]}
+            </span>
+          </div>
+        ))}
       </div>
 
       {/* Main Score Sheet */}
       <div className="main-score-sheet">
+        {/* Desktop: Tabelle */}
         <div className="score-table-container">
           <div className="score-table-wrapper">
             <table className="score-table">
@@ -542,9 +573,7 @@ export function GameDetails() {
                     </tr>
                   );
                 })}
-
-                {/* Scroll Anchor */}
-                <tr ref={bottomRef}></tr>
+                <tr></tr>
               </tbody>
             </table>
           </div>
@@ -552,14 +581,106 @@ export function GameDetails() {
           {rounds.length === 0 && (
             <div className="empty-state">
               <p>No rounds played yet.</p>
-              <button
-                onClick={handleAddRound}
-                className="empty-state-btn"
-              >
+              <button onClick={handleAddRound} className="empty-state-btn">
                 Start the game
               </button>
             </div>
           )}
+        </div>
+
+        {/* Mobile: Card View */}
+        <div className="card-view-container">
+          {rounds.length === 0 ? (
+            <div className="empty-state">
+              <p>No rounds played yet.</p>
+              <button onClick={handleAddRound} className="empty-state-btn">
+                Start the game
+              </button>
+            </div>
+          ) : (
+            tableData.map(row => {
+              const sum = Object.values(row.scores).reduce((a, b) => a + b, 0);
+              const isInvalid = sum !== 0;
+              const isExpanded = expandedRoundId === row.roundId;
+              return (
+                <div key={row.roundId} className={`round-card ${isInvalid ? 'round-card-invalid' : ''}`}>
+                  <div
+                    className="round-card-header"
+                    onClick={() => setExpandedRoundId(isExpanded ? null : row.roundId)}
+                  >
+                    <span className={`round-card-number ${isInvalid ? 'round-number-invalid' : ''}`}>
+                      Runde {row.roundNumber}
+                    </span>
+                    <div className="round-card-header-right">
+                      {isInvalid && (
+                        <span className="round-error-icon" title={`Sum is ${sum} (should be 0)`}>!</span>
+                      )}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className={`round-card-chevron ${isExpanded ? 'round-card-chevron-open' : ''}`}
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className={`round-card-body ${isExpanded ? 'round-card-body-open' : ''}`}>
+                  <div className="round-card-scores">
+                    {players.map(player => {
+                      const score = row.scores[player.id] ?? 0;
+                      const isEditing = editingCell?.roundId === row.roundId && editingCell?.playerId === player.id;
+                      return (
+                        <div key={player.id} className="round-card-score-row">
+                          <span className="round-card-player-name">{player.name}</span>
+                          <div
+                            className="score-cell"
+                            onClick={() => setEditingCell({ roundId: row.roundId, playerId: player.id })}
+                          >
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                defaultValue={score === 0 ? '' : score}
+                                className="score-input"
+                                autoFocus
+                                onFocus={(e) => e.target.select()}
+                                onBlur={(e) => {
+                                  const val = calculateScoreInput(e.target.value);
+                                  handleScoreUpdate(row.roundId, player.id, val);
+                                  setEditingCell(null);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    const val = calculateScoreInput((e.target as HTMLInputElement).value);
+                                    handleScoreUpdate(row.roundId, player.id, val);
+                                    setEditingCell(null);
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <span className={`score-display ${
+                                score > 0 ? 'score-positive' :
+                                score < 0 ? 'score-negative' :
+                                'score-zero'
+                              }`}>
+                                {score === 0 ? '-' : score > 0 ? `+${score}` : score}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          {gameTable?.is_open && (
+            <button onClick={handleAddRound} className="btn-add-round-mobile">
+              <span className="text-2xl leading-none">+</span>
+            </button>
+          )}
+          <div ref={bottomRef} />
         </div>
       </div>
 
