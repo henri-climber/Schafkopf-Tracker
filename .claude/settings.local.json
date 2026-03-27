@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find 'c:\\\\Users\\\\Admin\\\\Documents\\\\03 Work\\\\Schafkopf\\\\Schafkopf-Tracker\\\\src\\\\components' -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.jsx -o -name *.js -o -name *.css -o -name *.module.css \\\\\\))",
+      "Bash(grep -r \"\"\"tailwindcss\"\"\" package.json)"
+    ]
+  }
+}

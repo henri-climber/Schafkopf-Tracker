@@ -5,7 +5,7 @@
   height: 100vh;
   height: 100dvh;
   padding: 0;
-  overflow: hidden;
+  overflow-y: auto;
   text-align: center;
 }
 
@@ -14,28 +14,28 @@
     padding: 0;
     height: 100vh;
     height: 100dvh;
-    overflow: hidden;
+    overflow-y: auto;
   }
 
   .app-container {
     height: 100%;
-    overflow: hidden;
+    overflow-y: auto;
   }
 
   .main-content {
     padding-left: 0;
     padding-right: 0;
     height: 100%;
-    overflow: hidden;
+    overflow-y: auto;
   }
 }
 
 .app-container {
-  @apply h-full w-full bg-white overflow-hidden;
+  @apply h-full w-full bg-white overflow-x-hidden overflow-y-auto;
 }
 
 .main-content {
-  @apply w-full h-full overflow-hidden;
+  @apply w-full h-full overflow-x-hidden overflow-y-auto;
 }
 
 .logo {
