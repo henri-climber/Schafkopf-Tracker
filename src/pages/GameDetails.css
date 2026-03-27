@@ -32,7 +32,7 @@
 }
 
 .status-button {
-  @apply px-3 py-1.5 text-sm rounded-lg font-medium transition-colors;
+  @apply px-2 py-1.5 text-sm rounded-lg font-medium transition-colors min-[640px]:px-3;
 }
 
 .status-button-open {
@@ -211,4 +211,134 @@
 
 .score-zero {
   @apply text-gray-300;
+}
+
+/* ── Navbar: responsive icon/label switching ── */
+
+.status-icon-mobile {
+  @apply inline min-[640px]:hidden text-base leading-none;
+}
+
+.status-label-desktop {
+  @apply hidden min-[640px]:inline;
+}
+
+/* ── Mobile Totals Bar ── */
+
+.mobile-totals-bar {
+  @apply bg-white border-b sticky top-[68px] z-10 flex flex-row justify-evenly px-2 py-2 shadow-sm;
+}
+
+.mobile-totals-item {
+  @apply flex flex-col items-center flex-1;
+}
+
+.mobile-totals-name {
+  @apply text-xs font-medium text-gray-500 truncate max-w-[60px];
+}
+
+.mobile-totals-score {
+  @apply text-sm font-bold font-mono px-1 py-0.5 rounded mt-0.5;
+}
+
+/* ── Mobile Card View ── */
+
+.card-view-container {
+  @apply flex flex-col gap-3 w-full overflow-x-hidden;
+}
+
+.round-card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden;
+}
+
+.round-card-invalid {
+  @apply border-red-200 bg-red-50;
+}
+
+.round-card-header {
+  @apply flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-100 cursor-pointer select-none active:bg-gray-100;
+}
+
+.round-card-header-right {
+  @apply flex items-center gap-2;
+}
+
+.round-card-chevron {
+  @apply w-4 h-4 text-gray-400;
+  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.round-card-chevron-open {
+  @apply rotate-90;
+}
+
+.round-card-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.round-card-body-open {
+  grid-template-rows: 1fr;
+}
+
+.round-card-body > .round-card-scores {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.round-card-invalid .round-card-header {
+  @apply bg-red-100 border-red-200;
+}
+
+.round-card-number {
+  @apply text-sm font-semibold text-gray-500 font-mono;
+}
+
+.round-card-scores {
+  @apply divide-y divide-gray-50;
+}
+
+.round-card-score-row {
+  @apply flex items-center justify-between px-4 h-12;
+}
+
+.round-card-score-row .score-cell {
+  flex: 1;
+  width: auto;
+}
+
+.round-card-player-name {
+  @apply text-sm font-medium text-gray-700 w-24 truncate;
+}
+
+.btn-add-round-mobile {
+  @apply w-full py-4 rounded-xl bg-blue-600 text-white font-bold shadow-sm
+         hover:bg-blue-700 active:bg-blue-800 transition-colors
+         flex items-center justify-center;
+}
+
+/* ── Responsive show/hide ── */
+
+@media (max-width: 820px) {
+  .score-table-container { display: none; }
+  .btn-add-round { display: none; }
+  .game-details-container {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+
+@media (max-width: 639px) {
+  .main-score-sheet {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 821px) {
+  .mobile-totals-bar { display: none; }
+  .card-view-container { display: none; }
+  .btn-add-round-mobile { display: none; }
 }
