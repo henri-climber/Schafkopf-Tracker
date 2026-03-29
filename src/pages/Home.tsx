@@ -52,6 +52,10 @@ export function Home() {
   useEffect(() => {
     if (isDialogOpen) {
       loadPlayers()
+    } else {
+      setSearchTerm('')
+      setShowAddPlayerInput(false)
+      setNewPlayerName('')
     }
   }, [isDialogOpen])
 
@@ -111,7 +115,7 @@ export function Home() {
       if (error) throw error
 
       setPlayers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
-      setSelectedPlayerIds(prev => [...prev, data.id]) // Auto-select new player
+      setSelectedPlayerIds(prev => [...prev, data.id])
       setNewPlayerName('')
       setShowAddPlayerInput(false)
     } catch (error) {
@@ -210,8 +214,8 @@ export function Home() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="loading-spinner-wrapper">
+            <div className="loading-spinner"></div>
           </div>
         ) : activeTables.length === 0 ? (
           <div className="empty-state">
@@ -219,7 +223,7 @@ export function Home() {
             <p className="empty-state-text">No active games found</p>
             <button
               onClick={() => setIsDialogOpen(true)}
-              className="mt-4 text-blue-600 font-medium hover:underline"
+              className="empty-state-action"
             >
               Start a new game
             </button>
@@ -277,10 +281,10 @@ export function Home() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateTable} className="flex flex-col flex-1 overflow-hidden">
+            <form onSubmit={handleCreateTable} className="dialog-form">
               <div className="dialog-body">
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="form-field">
+                  <label className="form-label">
                     Game Name
                   </label>
                   <input
@@ -293,20 +297,20 @@ export function Home() {
                   />
                 </div>
 
-                <div className="flex flex-col h-[300px]">
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <div className="player-section">
+                  <div className="player-section-header">
+                    <label className="player-section-label">
                       <UserGroupIcon className="w-4 h-4" />
                       Select Players
                     </label>
-                    <span className="text-xs font-medium px-2 py-1 bg-blue-50 text-blue-700 rounded-full">
+                    <span className="player-count-badge">
                       {selectedPlayerIds.length} selected
                     </span>
                   </div>
 
-                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 flex flex-col flex-1 overflow-hidden">
-                    <div className="relative mb-2">
-                      <MagnifyingGlassIcon className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                  <div className="player-search-container">
+                    <div className="relative">
+                      <MagnifyingGlassIcon className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
                         placeholder="Search players..."
@@ -351,7 +355,7 @@ export function Home() {
                     <button
                       type="button"
                       onClick={() => setShowAddPlayerInput(true)}
-                      className="mt-3 text-sm text-blue-600 font-medium hover:text-blue-700 flex items-center gap-1 self-start ml-1"
+                      className="btn-add-player-link"
                     >
                       <PlusIcon className="w-4 h-4" /> Add new player
                     </button>
@@ -385,7 +389,7 @@ export function Home() {
                           setShowAddPlayerInput(false)
                           setNewPlayerName('')
                         }}
-                        className="p-2 text-gray-400 hover:text-gray-600"
+                        className="btn-cancel-player"
                       >
                         <XMarkIcon className="w-5 h-5" />
                       </button>
