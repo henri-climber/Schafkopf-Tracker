@@ -341,4 +341,27 @@
   .mobile-totals-bar { display: none; }
   .card-view-container { display: none; }
   .btn-add-round-mobile { display: none; }
+  .game-details-container {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #000 transparent;
+  }
+  .game-details-container::-webkit-scrollbar {
+    width: 4px;
+  }
+  .game-details-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .game-details-container::-webkit-scrollbar-thumb {
+    background: #000;
+    border-radius: 2px;
+  }
+  .game-details-container::-webkit-scrollbar-button {
+    display: none;
+    height: 0;
+    width: 0;
+  }
 }
