@@ -1,13 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import type { RoundScore } from '../lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
-
-interface RoundScore {
-  round_id: number;
-  player_id: number;
-  raw_score: number;
-  created_at: string;
-}
 
 interface UseGameSubscriptionProps {
   gameId: string;

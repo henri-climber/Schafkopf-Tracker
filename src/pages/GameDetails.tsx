@@ -72,7 +72,7 @@ const columnHelper = createColumnHelper<RoundRow>();
 
 function parseScore(val: string): number {
   if (!val) return 0;
-  return parseInt(val) || 0;
+  return parseInt(val, 10) || 0;
 }
 
 // ── ScoreCell component ──────────────────────────────────────────────────────
@@ -113,7 +113,13 @@ function ScoreCell({ score, isEditing, onStartEdit, onSave, onTabNext, onTabPrev
   }
 
   return (
-    <div className="score-cell" onClick={onStartEdit}>
+    <div
+      className="score-cell"
+      onClick={onStartEdit}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStartEdit(); } }}
+    >
       <span className={`score-display ${
         score > 0 ? 'score-positive' :
         score < 0 ? 'score-negative' :
@@ -184,6 +190,8 @@ export function GameDetails() {
           .in('round_id', roundIds);
         if (scoresError) throw scoresError;
         setRoundScores(scoresData || []);
+      } else {
+        setRoundScores([]);
       }
     } catch (err) {
       console.error('Error loading game data:', err);
@@ -196,7 +204,7 @@ export function GameDetails() {
   useEffect(() => {
     if (!id) return;
     loadGameData();
-  }, [id]);
+  }, [id, loadGameData]);
 
   // ── Realtime ───────────────────────────────────────────────────────────────
 
@@ -257,8 +265,11 @@ export function GameDetails() {
       .from('round_scores')
       .upsert({ round_id: roundId, player_id: playerId, raw_score: newScore });
 
-    if (error) console.error('Error updating score:', error);
-  }, [handleScoreUpdateRealtime]);
+    if (error) {
+      console.error('Error updating score:', error);
+      loadGameData();
+    }
+  }, [handleScoreUpdateRealtime, loadGameData]);
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
