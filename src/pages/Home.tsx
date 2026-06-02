@@ -15,12 +15,18 @@ import {
 } from '@heroicons/react/24/outline'
 import './Home.css'
 
+interface TablePlayer {
+  player_id: number
+  player: Player
+}
+
 interface Table {
   id: number
   name: string
   created_at: string
   is_open: boolean
   exclude_from_overall: boolean
+  table_players?: TablePlayer[]
 }
 
 interface Player {
@@ -40,6 +46,7 @@ export function Home() {
   const [showAddPlayerInput, setShowAddPlayerInput] = useState(false)
   const [newPlayerName, setNewPlayerName] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedFilterIds, setSelectedFilterIds] = useState<number[]>([])
 
   const filteredPlayers = players.filter(player =>
     player.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -63,7 +70,7 @@ export function Home() {
     try {
       const { data, error } = await supabase
         .from('Tables')
-        .select('*')
+        .select('*, table_players(player_id, player:Players(id, name))')
         .eq('is_open', true)
         .order('created_at', { ascending: false })
 
@@ -91,6 +98,12 @@ export function Home() {
     } finally {
       setLoadingPlayers(false)
     }
+  }
+
+  function toggleFilterPlayer(id: number) {
+    setSelectedFilterIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
   }
 
   function togglePlayerSelection(playerId: number) {
@@ -213,24 +226,85 @@ export function Home() {
           </h2>
         </div>
 
-        {loading ? (
-          <div className="loading-spinner-wrapper">
-            <div className="loading-spinner"></div>
-          </div>
-        ) : activeTables.length === 0 ? (
-          <div className="empty-state">
-            <TableCellsIcon className="empty-state-icon" />
-            <p className="empty-state-text">No active games found</p>
-            <button
-              onClick={() => setIsDialogOpen(true)}
-              className="empty-state-action"
-            >
-              Start a new game
-            </button>
-          </div>
-        ) : (
+        {(() => {
+          const seen = new Set<number>()
+          const filterPlayers: Player[] = []
+          for (const table of activeTables) {
+            for (const tp of table.table_players ?? []) {
+              if (!seen.has(tp.player.id)) {
+                seen.add(tp.player.id)
+                filterPlayers.push(tp.player)
+              }
+            }
+          }
+          filterPlayers.sort((a, b) => a.name.localeCompare(b.name))
+          return filterPlayers.length > 0 ? (
+            <div className="player-filter-bar">
+              {filterPlayers.map(player => (
+                <button
+                  key={player.id}
+                  onClick={() => toggleFilterPlayer(player.id)}
+                  className={`player-filter-chip${selectedFilterIds.includes(player.id) ? ' active' : ''}`}
+                >
+                  {player.name}
+                </button>
+              ))}
+              {selectedFilterIds.length > 0 && (
+                <button onClick={() => setSelectedFilterIds([])} className="player-filter-clear">
+                  ✕ Zurücksetzen
+                </button>
+              )}
+            </div>
+          ) : null
+        })()}
+
+        {(() => {
+          const displayedTables = selectedFilterIds.length === 0
+            ? activeTables
+            : activeTables.filter(table =>
+                selectedFilterIds.every(id =>
+                  table.table_players?.some(tp => tp.player_id === id)
+                )
+              )
+
+          if (loading) {
+            return (
+              <div className="loading-spinner-wrapper">
+                <div className="loading-spinner"></div>
+              </div>
+            )
+          }
+          if (activeTables.length === 0) {
+            return (
+              <div className="empty-state">
+                <TableCellsIcon className="empty-state-icon" />
+                <p className="empty-state-text">No active games found</p>
+                <button
+                  onClick={() => setIsDialogOpen(true)}
+                  className="empty-state-action"
+                >
+                  Start a new game
+                </button>
+              </div>
+            )
+          }
+          if (displayedTables.length === 0) {
+            return (
+              <div className="empty-state">
+                <TableCellsIcon className="empty-state-icon" />
+                <p className="empty-state-text">Keine Spiele mit diesen Spielern</p>
+                <button
+                  onClick={() => setSelectedFilterIds([])}
+                  className="empty-state-action"
+                >
+                  Filter zurücksetzen
+                </button>
+              </div>
+            )
+          }
+          return (
           <div className="active-games-grid">
-            {activeTables.map((table) => (
+            {displayedTables.map((table) => (
               <div
                 key={table.id}
                 onClick={() => navigate(`/game-details/${table.id}`)}
@@ -255,7 +329,8 @@ export function Home() {
               </div>
             ))}
           </div>
-        )}
+          )
+        })()}
       </div>
 
       {/* Past Games Floating Button */}

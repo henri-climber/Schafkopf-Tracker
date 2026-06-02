@@ -272,6 +272,23 @@
   @apply px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md active:translate-y-0.5 transform;
 }
 
+/* Player Filter Bar */
+.player-filter-bar {
+  @apply flex flex-wrap gap-2 mb-4;
+}
+
+.player-filter-chip {
+  @apply px-3 py-1.5 rounded-full text-sm font-medium border border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:text-blue-600 transition-colors cursor-pointer;
+}
+
+.player-filter-chip.active {
+  @apply bg-blue-600 text-white border-blue-600;
+}
+
+.player-filter-clear {
+  @apply px-3 py-1.5 rounded-full text-sm font-medium text-gray-400 hover:text-red-500 transition-colors cursor-pointer;
+}
+
 /* Footer Button */
 .past-games-button {
   @apply mt-8 mb-8 px-6 py-3 bg-white text-gray-800 font-semibold rounded-full shadow border border-gray-200 hover:bg-gray-50 hover:text-blue-600 hover:shadow-md transition-all flex items-center gap-2 whitespace-nowrap;
