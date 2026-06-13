@@ -67,4 +67,33 @@ export type RoundScore = {
   player_id: number
   raw_score: number
   created_at: string
-} 
+}
+
+// --- Tischtennis ---
+export type TTFormat = 'singles' | 'doubles'
+export type TTSide = 'A' | 'B'
+
+export type TTMatch = {
+  id: number
+  created_at: string
+  name: string | null
+  format: TTFormat
+  best_of: number
+  is_open: boolean
+  exclude_from_overall: boolean
+}
+
+export type TTMatchPlayer = {
+  match_id: number
+  player_id: number
+  side: TTSide
+}
+
+export type TTSet = {
+  id: number
+  match_id: number
+  set_number: number
+  score_a: number
+  score_b: number
+  created_at: string
+}
