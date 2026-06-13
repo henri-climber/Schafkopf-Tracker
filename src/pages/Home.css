@@ -9,6 +9,23 @@
   @apply w-full pt-12 pb-6 px-6 flex flex-col items-center justify-center;
 }
 
+/* Sport Mode Toggle */
+.sport-toggle {
+  @apply inline-flex items-center gap-1 p-1 mb-6 bg-gray-100 rounded-full border border-gray-200;
+}
+
+.sport-toggle-btn {
+  @apply px-5 py-2 rounded-full text-sm font-semibold text-gray-500 transition-all cursor-pointer flex items-center gap-1.5;
+}
+
+.sport-toggle-btn:hover {
+  @apply text-gray-700;
+}
+
+.sport-toggle-btn.active {
+  @apply bg-white text-gray-900 shadow-sm;
+}
+
 .home-title {
   @apply text-4xl font-extrabold tracking-tight text-gray-900 mb-2;
   background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
@@ -287,6 +304,102 @@
 
 .player-filter-clear {
   @apply px-3 py-1.5 rounded-full text-sm font-medium text-gray-400 hover:text-red-500 transition-colors cursor-pointer;
+}
+
+/* Tischtennis: Segmented Controls (Format / Best-of) */
+.tt-segment {
+  @apply inline-flex w-full p-1 bg-gray-100 rounded-xl border border-gray-200 gap-1;
+}
+
+.tt-segment-btn {
+  @apply flex-1 px-3 py-2 rounded-lg text-sm font-semibold text-gray-500 transition-all cursor-pointer text-center;
+}
+
+.tt-segment-btn:hover {
+  @apply text-gray-700;
+}
+
+.tt-segment-btn.active {
+  @apply bg-white text-gray-900 shadow-sm;
+}
+
+/* Tischtennis: Best-of Stepper (frei waehlbar) */
+.tt-stepper {
+  @apply inline-flex items-center gap-2;
+}
+
+.tt-stepper-btn {
+  @apply w-11 h-11 rounded-xl bg-gray-100 border border-gray-200 text-2xl font-bold text-gray-600
+         flex items-center justify-center transition-colors hover:bg-gray-200
+         disabled:opacity-40 disabled:cursor-not-allowed select-none;
+}
+
+.tt-stepper-input {
+  @apply w-20 h-11 text-center bg-white border border-gray-200 rounded-xl text-lg font-mono font-bold
+         text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all;
+}
+
+.tt-presets {
+  @apply flex flex-wrap gap-2 mt-3;
+}
+
+.tt-preset {
+  @apply px-3 py-1.5 rounded-full text-sm font-medium border border-gray-200 bg-white text-gray-600
+         hover:border-blue-300 hover:text-blue-600 transition-colors cursor-pointer;
+}
+
+.tt-preset.active {
+  @apply bg-blue-600 text-white border-blue-600;
+}
+
+/* Tischtennis: Team-Boxen in der Spielerauswahl */
+.tt-teams {
+  @apply grid grid-cols-2 gap-3 mb-3;
+}
+
+.tt-team-box {
+  @apply bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-col gap-2 min-h-24;
+}
+
+.tt-team-box.active {
+  @apply border-blue-400 bg-blue-50;
+}
+
+.tt-team-title {
+  @apply text-xs font-bold uppercase tracking-wide text-gray-500 flex items-center justify-between;
+}
+
+.tt-team-target {
+  @apply text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-600 text-white;
+}
+
+.tt-chip {
+  @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-medium bg-white border border-gray-200 text-gray-700;
+}
+
+.tt-chip-remove {
+  @apply text-gray-400 hover:text-red-500 cursor-pointer leading-none;
+}
+
+.tt-team-empty {
+  @apply text-xs text-gray-400 italic;
+}
+
+/* Tischtennis: aktive Match-Karte */
+.tt-match-teams {
+  @apply flex items-center gap-2 text-gray-900 font-semibold;
+}
+
+.tt-match-side {
+  @apply flex-1 line-clamp-2;
+}
+
+.tt-match-vs {
+  @apply text-xs font-bold text-gray-400 px-1;
+}
+
+.tt-format-badge {
+  @apply px-2 py-1 rounded text-xs font-semibold bg-purple-100 text-purple-700 tracking-wide uppercase;
 }
 
 /* Footer Button */

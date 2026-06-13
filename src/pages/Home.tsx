@@ -13,6 +13,9 @@ import {
   ArrowRightIcon,
   TableCellsIcon
 } from '@heroicons/react/24/outline'
+import { useSportMode } from '../context/SportModeContext'
+import { SportToggle } from '../components/SportToggle'
+import { TTHome } from './tt/TTHome'
 import './Home.css'
 
 interface TablePlayer {
@@ -35,6 +38,12 @@ interface Player {
 }
 
 export function Home() {
+  const { mode } = useSportMode()
+  if (mode === 'tt') return <TTHome />
+  return <SchafkopfHome />
+}
+
+function SchafkopfHome() {
   const navigate = useNavigate()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [tableName, setTableName] = useState('')
@@ -182,6 +191,7 @@ export function Home() {
     <div className="home-container">
       {/* Header */}
       <header className="home-header">
+        <SportToggle />
         <h1 className="home-title">
           Schafkopf Tracker
         </h1>
