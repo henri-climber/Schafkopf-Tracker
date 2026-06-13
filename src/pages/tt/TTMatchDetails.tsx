@@ -2,8 +2,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import type { TTMatch, TTSet, TTSide } from '../../lib/supabase'
-import { matchWinner, setsWon, setsNeeded } from '../../lib/tt'
-import { LockOpenIcon, LockClosedIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { matchWinner, setsWon, setsNeeded, isSetDecided } from '../../lib/tt'
+import { LockOpenIcon, LockClosedIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
 import '../GameDetails.css'
 import './TTMatchDetails.css'
 
@@ -109,6 +109,37 @@ export function TTMatchDetails() {
     setSets(prev => [...prev, data])
   }
 
+  async function handleDeleteSet(setId: number) {
+    if (!match || !match.is_open) return
+
+    const { error: delErr } = await supabase.from('tt_sets').delete().eq('id', setId)
+    if (delErr) {
+      console.error('Error deleting set:', delErr)
+      loadMatch()
+      return
+    }
+
+    // Verbleibende Saetze fortlaufend neu nummerieren (1..n), damit keine
+    // Luecken entstehen (set_number ist unique pro Match).
+    const remaining = sets.filter(s => s.id !== setId)
+    for (let i = 0; i < remaining.length; i++) {
+      const desired = i + 1
+      if (remaining[i].set_number !== desired) {
+        const { error: upErr } = await supabase
+          .from('tt_sets')
+          .update({ set_number: desired })
+          .eq('id', remaining[i].id)
+        if (upErr) {
+          console.error('Error renumbering sets:', upErr)
+          loadMatch()
+          return
+        }
+        remaining[i] = { ...remaining[i], set_number: desired }
+      }
+    }
+    setSets(remaining)
+  }
+
   async function handleChangeBestOf(next: number) {
     if (!match) return
     const min = Math.max(1, sets.length) // nicht unter die bereits gespielten Saetze
@@ -127,6 +158,8 @@ export function TTMatchDetails() {
 
   async function handleToggleIsOpen() {
     if (!match) return
+    // Schliessen nur erlaubt, wenn es einen Gewinner gibt (Wiederoeffnen immer).
+    if (match.is_open && winner === null) return
     const newValue = !match.is_open
     const { error: err } = await supabase
       .from('tt_matches')
@@ -188,8 +221,15 @@ export function TTMatchDetails() {
         <div className="nav-right">
           <button
             onClick={handleToggleIsOpen}
-            title={match.is_open ? 'Open' : 'Closed'}
-            className={`status-button ${match.is_open ? 'status-button-open' : 'status-button-closed'}`}
+            disabled={match.is_open && winner === null}
+            title={
+              match.is_open
+                ? winner === null
+                  ? 'Schließen erst möglich, wenn ein Satz-Sieger feststeht'
+                  : 'Match schließen'
+                : 'Match wieder öffnen'
+            }
+            className={`status-button ${match.is_open ? 'status-button-open' : 'status-button-closed'} disabled:opacity-40 disabled:cursor-not-allowed`}
           >
             <span className="status-icon-mobile">
               {match.is_open ? <LockOpenIcon className="w-5 h-5" /> : <LockClosedIcon className="w-5 h-5" />}
@@ -267,8 +307,9 @@ export function TTMatchDetails() {
           ) : (
             <div className="tt-sets-list">
               {sets.map(set => {
-                const aWonSet = set.score_a > set.score_b
-                const bWonSet = set.score_b > set.score_a
+                const decided = isSetDecided(set.score_a, set.score_b)
+                const aWonSet = decided && set.score_a > set.score_b
+                const bWonSet = decided && set.score_b > set.score_a
                 return (
                   <div key={set.id} className="tt-set-row">
                     <span className="tt-set-label">Satz {set.set_number}</span>
@@ -297,6 +338,17 @@ export function TTMatchDetails() {
                       />
                       <span className={`tt-set-tag tt-set-tag-b ${bWonSet ? '' : 'opacity-0'}`}>✓</span>
                     </div>
+                    {match.is_open && (
+                      <button
+                        type="button"
+                        className="tt-set-delete"
+                        onClick={() => handleDeleteSet(set.id)}
+                        title="Satz löschen"
+                        aria-label={`Satz ${set.set_number} löschen`}
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 )
               })}

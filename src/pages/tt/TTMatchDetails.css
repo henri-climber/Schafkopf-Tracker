@@ -127,6 +127,10 @@
   @apply text-emerald-600;
 }
 
+.tt-set-delete {
+  @apply ml-2 p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0;
+}
+
 .tt-add-set-btn {
   @apply w-full py-4 font-bold text-blue-600 hover:bg-blue-50 transition-colors
          flex items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent;

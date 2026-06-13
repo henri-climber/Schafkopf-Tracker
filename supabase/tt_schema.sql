@@ -71,13 +71,15 @@ create policy "Enable insert for all users" on public.tt_match_players
 create policy "Enable update for all" on public.tt_match_players
   for update to anon using (true) with check (true);
 
--- tt_sets
+-- tt_sets (inkl. DELETE: einzelne Saetze koennen im UI geloescht werden)
 create policy "Enable read access for all users" on public.tt_sets
   for select to public using (true);
 create policy "Enable insert for all users" on public.tt_sets
   for insert to anon with check (true);
 create policy "Enable update for all" on public.tt_sets
   for update to anon using (true) with check (true);
+create policy "Enable delete for all" on public.tt_sets
+  for delete to anon using (true);
 
 -- ---------------------------------------------------------------------------
 -- Realtime (optional): Tabellen zur supabase_realtime-Publication hinzufuegen,
