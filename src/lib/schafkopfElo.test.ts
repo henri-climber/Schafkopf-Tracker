@@ -112,6 +112,19 @@ describe('computeSchafkopfLeaderboard – 2N-Schwelle & LB', () => {
     expect(res.get(4)!.lbTotal).toBeCloseTo(-2, 10)
   })
 
+  it('führt Elo über Tische hinweg, wertet aber nur countsForLeaderboard-Tische (Semester-Carry)', () => {
+    const pre: TableInput = { ...fourPlayerTable(1, '2024-01-01', 8), countsForLeaderboard: false }
+    const inWindow: TableInput = { ...fourPlayerTable(2, '2025-01-01', 8), countsForLeaderboard: true }
+    const res = computeSchafkopfLeaderboard([pre, inWindow])
+    const a = res.get(1)!
+    // Vor-Semester-Tisch zählt nicht für LB, updatet aber das Elo.
+    expect(a.tablesCounted).toBe(1) // nur der In-Window-Tisch
+    expect(a.hands).toBe(16) // beide Tische gespielt
+    // Entry-Elo an Tisch 2 ist durch Tisch 1 nicht mehr BASE -> Spieler 1 (stark)
+    // wird Erster, aber unter Erwartung -> LB < reine Platzierungspunkte (+2).
+    expect(a.lbTotal).toBeLessThan(2)
+  })
+
   it('wertet einen Tisch mit < 2N Runden NICHT, updatet aber das Elo', () => {
     const res = computeSchafkopfLeaderboard([fourPlayerTable(1, '2025-01-01', 7)])
     const a = res.get(1)!

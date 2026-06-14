@@ -65,6 +65,13 @@ export interface TableInput {
   tableId: number
   createdAt: string
   rounds: RoundInput[] // chronologisch nach Rundennummer
+  /**
+   * Zählt dieser Tisch für Abrechnung + Leaderboard? Default true. Auf false
+   * gesetzt für Tische außerhalb des betrachteten Fensters (z.B. Vor-Semester):
+   * Das Stärke-Elo wird trotzdem fortgeschrieben (Carry-over), aber LB/Strich
+   * werden nicht gezählt.
+   */
+  countsForLeaderboard?: boolean
 }
 
 export interface PlayerResult {
@@ -183,8 +190,9 @@ export function computeSchafkopfLeaderboard(
 
     const n = participants.length
     const placement = getPlacementPoints(n)
+    const counts = table.countsForLeaderboard !== false
     const qualifies =
-      placement.length > 0 && table.rounds.length >= cfg.fullValuationRoundFactor * n
+      counts && placement.length > 0 && table.rounds.length >= cfg.fullValuationRoundFactor * n
 
     // --- Bewertung (vor dem Elo-Update: Entry-Elo-Snapshot) ---
     if (qualifies) {

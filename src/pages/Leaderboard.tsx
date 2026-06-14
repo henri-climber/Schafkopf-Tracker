@@ -75,12 +75,14 @@ export function Leaderboard() {
       if (playersError) throw playersError
       const nameById = new Map<number, string>((playersData || []).map(p => [p.id, p.name]))
 
-      // 2. Tische im Semesterfenster, nicht ausgeschlossen
+      // 2. Tische bis zum Semesterende, nicht ausgeschlossen.
+      //    Die gesamte Historie VOR dem Semester wird mitgeladen, damit das
+      //    Stärke-Elo über Semester hinweg fortgeschrieben wird (Carry-over).
+      //    Nur Tische IM Semesterfenster zählen für LB/Strich (siehe Flag unten).
       let query = supabase
         .from('Tables')
         .select('id, created_at, exclude_from_overall')
         .eq('exclude_from_overall', false)
-        .gte('created_at', selectedSemester.startDate)
         .lte('created_at', selectedSemester.endDate)
       if (!includeOngoing) {
         query = query.eq('is_open', false)
@@ -116,7 +118,12 @@ export function Leaderboard() {
           .map(r => ({ scores: byRound.get(r.id) || [] }))
           .filter(r => r.scores.length > 0)
 
-        tableInputs.push({ tableId: table.id, createdAt: table.created_at, rounds })
+        tableInputs.push({
+          tableId: table.id,
+          createdAt: table.created_at,
+          rounds,
+          countsForLeaderboard: table.created_at >= selectedSemester.startDate,
+        })
       }
 
       // 4. Chronologischer Replay: Stärke-Elo + gewichtetes Leaderboard
