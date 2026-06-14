@@ -19,8 +19,12 @@
 // deterministisch repliziert -> idempotente Rückrechnung ohne Persistenz.
 
 export interface SchafkopfConfig {
-  /** K-Faktor des Per-Hand-Elo-Updates. */
+  /** K-Faktor (Dauerwert nach der Provisorik-Phase). */
   K: number
+  /** Höherer K-Faktor während der Provisorik (erste `provisionalHands` Hände). */
+  provisionalK: number
+  /** Anzahl Hände, nach denen ein Spieler vom provisionalK auf K wechselt. */
+  provisionalHands: number
   /** Start-Elo neuer Spieler. */
   BASE: number
   /** Elo-Skala (Standard 400). */
@@ -38,16 +42,25 @@ export interface SchafkopfConfig {
   marginDamping: number
   /** Ein Tisch zählt für Abrechnung + LB iff rundenanzahl >= factor * N. */
   fullValuationRoundFactor: number
+  /**
+   * Gewichtung der Gegnerstärke im Leaderboard:
+   *   LB = Platzierungspunkte − lbExpectationWeight · erwartetePunkte
+   * 1 = voll gegnergewichtet, 0 = reine Platzierung. Default 0.8.
+   */
+  lbExpectationWeight: number
 }
 
 export const SK_CONFIG: SchafkopfConfig = {
-  K: 32,
+  K: 25, // Dauerwert
+  provisionalK: 40, // Provisorik: schnelleres Einpendeln neuer Spieler
+  provisionalHands: 30,
   BASE: 1000,
   SCALE: 400,
   marginTarif: 10,
   marginMax: 1.5,
   marginDamping: 0, // AUS: reines Sieg/Niederlage (Siegeshöhe = Glück)
   fullValuationRoundFactor: 2,
+  lbExpectationWeight: 0.8,
 }
 
 export interface HandScore {
@@ -210,7 +223,7 @@ export function computeSchafkopfLeaderboard(
         const r = ensure(id)
         const actual = actualByPlayer.get(id) ?? 0
         r.settlementTotal += actual
-        r.lbTotal += actual - exp[i]
+        r.lbTotal += actual - cfg.lbExpectationWeight * exp[i]
         r.tablesCounted += 1
       })
     }
@@ -229,11 +242,14 @@ export function computeSchafkopfLeaderboard(
       const expL = expectedScore(teamL, teamW, cfg.SCALE)
 
       const totalMargin = winners.reduce((sum, s) => sum + s.rawScore, 0)
-      const effK = cfg.K * marginMultiplier(totalMargin, cfg)
+      const margin = marginMultiplier(totalMargin, cfg)
+      // K pro Spieler: hoehere Provisorik in den ersten `provisionalHands` Haenden.
+      const kFor = (p: PlayerResult) =>
+        (p.hands < cfg.provisionalHands ? cfg.provisionalK : cfg.K) * margin
 
       // Updates basieren auf dem eigenen Rating; Teams sind disjunkt -> direkt anwenden.
-      wr.forEach(p => { p.elo = Math.round(p.elo + effK * (1 - expW)); p.hands += 1; p.wins += 1 })
-      lr.forEach(p => { p.elo = Math.round(p.elo + effK * (0 - expL)); p.hands += 1 })
+      wr.forEach(p => { p.elo = Math.round(p.elo + kFor(p) * (1 - expW)); p.hands += 1; p.wins += 1 })
+      lr.forEach(p => { p.elo = Math.round(p.elo + kFor(p) * (0 - expL)); p.hands += 1 })
     }
   }
 

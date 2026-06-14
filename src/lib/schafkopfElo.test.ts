@@ -67,8 +67,8 @@ describe('expectedPoints', () => {
 })
 
 describe('computeSchafkopfLeaderboard – Elo-Update', () => {
-  it('symmetrisches 2v2-Update bei gleichen Ratings (ohne Margin)', () => {
-    const cfg = { ...SK_CONFIG, marginDamping: 0 } // Multiplikator = 1
+  it('symmetrisches 2v2-Update bei gleichen Ratings (K fix, ohne Provisorik/Margin)', () => {
+    const cfg = { ...SK_CONFIG, K: 32, provisionalHands: 0, marginDamping: 0 }
     const res = computeSchafkopfLeaderboard([fourPlayerTable(1, '2025-01-01', 1)], cfg)
     // expW = 0.5, K = 32 -> Gewinner +16, Verlierer -16
     expect(res.get(1)!.elo).toBe(1016)
@@ -77,6 +77,24 @@ describe('computeSchafkopfLeaderboard – Elo-Update', () => {
     expect(res.get(4)!.elo).toBe(984)
     expect(res.get(1)!.wins).toBe(1)
     expect(res.get(3)!.wins).toBe(0)
+  })
+
+  it('nutzt provisionalK in der Provisorik-Phase, danach K', () => {
+    const oneHand = (): TableInput => ({
+      tableId: 1, createdAt: '2025-01-01',
+      rounds: [{ scores: [{ playerId: 1, rawScore: 1 }, { playerId: 2, rawScore: -1 }] }],
+    })
+    // Gleiche Elos -> expW = 0.5. Provisorik aktiv: +round(40*0.5) = +20.
+    const prov = computeSchafkopfLeaderboard(
+      [oneHand()], { ...SK_CONFIG, K: 25, provisionalK: 40, provisionalHands: 1, marginDamping: 0 })
+    expect(prov.get(1)!.elo).toBe(1020)
+    expect(prov.get(2)!.elo).toBe(980)
+    // Provisorik aus (provisionalHands 0) -> Dauerwert K=25: round(1012.5)=1013,
+    // round(987.5)=988 (Math.round rundet .5 auf, wie die elo-rank-Lib).
+    const steady = computeSchafkopfLeaderboard(
+      [oneHand()], { ...SK_CONFIG, K: 25, provisionalK: 40, provisionalHands: 0, marginDamping: 0 })
+    expect(steady.get(1)!.elo).toBe(1013)
+    expect(steady.get(2)!.elo).toBe(988)
   })
 
   it('ignoriert Aussetzer (rawScore 0) bei der Team-Rekonstruktion', () => {

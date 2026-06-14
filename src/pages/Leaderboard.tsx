@@ -136,7 +136,8 @@ export function Leaderboard() {
           elo: Math.round(r.elo),
           hands: r.hands,
           tablesCounted: r.tablesCounted,
-          lb: r.lbTotal,
+          // LB = Können pro Spiel (Ø), nicht Summe -> keine Vielspieler-Bevorzugung.
+          lb: r.lbTotal / r.tablesCounted,
           settlement: r.settlementTotal,
         }))
         .sort((a, b) => b.lb - a.lb || b.elo - a.elo || a.name.localeCompare(b.name))
@@ -169,7 +170,7 @@ export function Leaderboard() {
     }
   }
 
-  const fmtLb = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`
+  const fmtLb = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(2)}`
 
   if (loading) return (
     <div className="loading-container">
@@ -384,7 +385,7 @@ export function Leaderboard() {
                     <th className="t-header-cell">Player</th>
                     <th className="t-header-cell-right">Spiele</th>
                     <th className="t-header-cell-right">Elo</th>
-                    <th className="t-header-cell-right">LB</th>
+                    <th className="t-header-cell-right">Ø LB</th>
                   </tr>
                 </thead>
                 <tbody className="t-body">
