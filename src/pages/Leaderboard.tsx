@@ -2,14 +2,17 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { PlayerScoreChart } from '../components/PlayerScoreChart'
+import { computeSchafkopfLeaderboard, type TableInput } from '../lib/schafkopfElo'
 import './Leaderboard.css'
 
 interface Player {
   id: number
   name: string
-  created_at: string
-  totalScore: number
-  gamesPlayed: number
+  elo: number
+  hands: number
+  tablesCounted: number
+  lb: number
+  settlement: number
 }
 
 interface Semester {
@@ -46,20 +49,6 @@ const SEMESTERS: Semester[] = [
   }
 ]
 
-const SEMESTER_3_OFFSETS: Record<string, number> = {
-  'Nikita': -2,
-  'Quentin': -1,
-  'Jost': 1,
-  'Finy': -4,
-  'Riccardo': 5,
-  'Emil': 0,
-  'Henri': 4,
-  'Timon': -2,
-  'Lukas': 1,
-  'Pfirrmann': -2
-}
-
-
 export function Leaderboard() {
   const navigate = useNavigate()
   const [players, setPlayers] = useState<Player[]>([])
@@ -69,129 +58,91 @@ export function Leaderboard() {
   const [newPlayerName, setNewPlayerName] = useState('')
   const [includeOngoing, setIncludeOngoing] = useState(false)
   const [selectedSemesterId, setSelectedSemesterId] = useState<string>(SEMESTERS[SEMESTERS.length - 1].id)
-const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEMESTERS[0]
+  const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEMESTERS[0]
 
   useEffect(() => {
-    console.log(selectedSemester)
     loadLeaderboard()
   }, [includeOngoing, selectedSemesterId])
-
-  function getPointsDistribution(playerCount: number): number[] {
-    switch (playerCount) {
-      case 4:
-        return [2, 1, -1, -2]
-      case 5:
-        return [2, 1, 0, -1, -2]
-      case 6:
-        return [3, 2, 1, -1, -2, -3]
-      default:
-        console.warn(`Unexpected player count: ${playerCount}`)
-        return []
-    }
-  }
 
   async function loadLeaderboard() {
     setLoading(true)
     setError(null)
     try {
-      // 1. First, get all players
+      // 1. Spielernamen (id -> name)
       const { data: playersData, error: playersError } = await supabase
         .from('Players')
-        .select('*')
-
+        .select('id, name')
       if (playersError) throw playersError
+      const nameById = new Map<number, string>((playersData || []).map(p => [p.id, p.name]))
 
-      // Initialize players with zero scores
-      const playerMap = new Map(
-        playersData.map(p => [p.id, { ...p, totalScore: 0, gamesPlayed: 0 }])
-      )
-
-      // 2. Get all tables that aren't excluded
+      // 2. Tische bis zum Semesterende, nicht ausgeschlossen.
+      //    Die gesamte Historie VOR dem Semester wird mitgeladen, damit das
+      //    Stärke-Elo über Semester hinweg fortgeschrieben wird (Carry-over).
+      //    Nur Tische IM Semesterfenster zählen für LB/Strich (siehe Flag unten).
       let query = supabase
         .from('Tables')
-        .select('id, name, exclude_from_overall')
+        .select('id, created_at, exclude_from_overall')
         .eq('exclude_from_overall', false)
-        .gte('created_at', selectedSemester.startDate)
         .lte('created_at', selectedSemester.endDate)
-
-      // Only add is_open filter if we're not including ongoing games
       if (!includeOngoing) {
         query = query.eq('is_open', false)
       }
-
       const { data: tablesData, error: tablesError } = await query
-
       if (tablesError) throw tablesError
-      console.log(tablesData)
-      // 3. For each table, get players and their scores
-      for (const table of tablesData) {
-        // First get all round IDs for this table
+
+      // 3. Pro Tisch: Runden (chronologisch) + Scores laden -> TableInput
+      const tableInputs: TableInput[] = []
+      for (const table of tablesData || []) {
         const { data: roundsData, error: roundsError } = await supabase
           .from('Rounds')
-          .select('id')
+          .select('id, round_number')
           .eq('table_id', table.id)
-
+          .order('round_number', { ascending: true })
         if (roundsError) throw roundsError
-        if (!roundsData?.length) continue // Skip if no rounds found
+        if (!roundsData?.length) continue
 
         const roundIds = roundsData.map(r => r.id)
-
-        // Then get all scores for these rounds
         const { data: scoresData, error: scoresError } = await supabase
           .from('round_scores')
-          .select('player_id, raw_score')
+          .select('round_id, player_id, raw_score')
           .in('round_id', roundIds)
-
         if (scoresError) throw scoresError
-        console.log(scoresData)
-        // Calculate total raw score per player for this table
-        const playerScores = scoresData.reduce((acc, score) => {
-          if (!acc[score.player_id]) {
-            acc[score.player_id] = 0
-          }
-          acc[score.player_id] += score.raw_score
-          return acc
-        }, {} as Record<number, number>)
 
-        // Convert to array and sort by score
-        const sortedPlayers = Object.entries(playerScores)
-          .map(([playerId, total_raw_score]) => ({
-            player_id: parseInt(playerId),
-            total_raw_score
-          }))
-          .sort((a, b) => b.total_raw_score - a.total_raw_score)
+        const byRound = new Map<number, { playerId: number; rawScore: number }[]>()
+        for (const s of scoresData || []) {
+          if (!byRound.has(s.round_id)) byRound.set(s.round_id, [])
+          byRound.get(s.round_id)!.push({ playerId: s.player_id, rawScore: s.raw_score })
+        }
 
-        console.log(sortedPlayers)
-        // Get points distribution based on player count
-        const points = getPointsDistribution(sortedPlayers.length)
+        const rounds = roundsData
+          .map(r => ({ scores: byRound.get(r.id) || [] }))
+          .filter(r => r.scores.length > 0)
 
-        // Assign points to players
-        sortedPlayers.forEach((player, index) => {
-          const currentPlayer = playerMap.get(player.player_id)
-          if (currentPlayer) {
-            currentPlayer.totalScore += points[index] || 0
-            currentPlayer.gamesPlayed += 1
-          }
+        tableInputs.push({
+          tableId: table.id,
+          createdAt: table.created_at,
+          rounds,
+          countsForLeaderboard: table.created_at >= selectedSemester.startDate,
         })
       }
 
-      // Convert player map to sorted array
-      const sortedPlayers = Array.from(playerMap.values())
-        .map(player => {
-          // Apply Semester 3 offsets
-          if (selectedSemester.id === 'sem3') {
-            const offset = SEMESTER_3_OFFSETS[player.name] || 0
-            return {
-              ...player,
-              totalScore: player.totalScore + offset
-            }
-          }
-          return player
-        })
-        .filter(player => player.gamesPlayed > 0)
-        .sort((a, b) => b.totalScore - a.totalScore || b.gamesPlayed - a.gamesPlayed || a.name.localeCompare(b.name))
+      // 4. Chronologischer Replay: Stärke-Elo + gewichtetes Leaderboard
+      const results = computeSchafkopfLeaderboard(tableInputs)
+      const rows: Player[] = Array.from(results.values())
+        .filter(r => r.tablesCounted > 0)
+        .map(r => ({
+          id: r.playerId,
+          name: nameById.get(r.playerId) ?? `#${r.playerId}`,
+          elo: Math.round(r.elo),
+          hands: r.hands,
+          tablesCounted: r.tablesCounted,
+          // LB = Können pro Spiel (Ø), nicht Summe -> keine Vielspieler-Bevorzugung.
+          lb: r.lbTotal / r.tablesCounted,
+          settlement: r.settlementTotal,
+        }))
+        .sort((a, b) => b.lb - a.lb || b.elo - a.elo || a.name.localeCompare(b.name))
 
-      setPlayers(sortedPlayers)
+      setPlayers(rows)
     } catch (err) {
       console.error('Error loading leaderboard:', err)
       setError(err instanceof Error ? err.message : 'An error occurred while loading the leaderboard')
@@ -218,6 +169,8 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
       console.error('Error adding player:', error)
     }
   }
+
+  const fmtLb = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(2)}`
 
   if (loading) return (
     <div className="loading-container">
@@ -385,9 +338,9 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
                 <div className="podium-number podium-number-2">2</div>
                 <div className="text-center">
                   <div className="podium-name">{top3[1].name}</div>
-                  <div className="podium-score">{top3[1].totalScore > 0 ? '+' : ''}{top3[1].totalScore}</div>
+                  <div className="podium-score">{fmtLb(top3[1].lb)}</div>
                 </div>
-                <div className="podium-games">{top3[1].gamesPlayed} games</div>
+                <div className="podium-games">{top3[1].tablesCounted} Spiele · {top3[1].elo}</div>
               </div>
             )}
 
@@ -399,10 +352,10 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
                 <div className="text-center">
                   <div className="podium-name">{top3[0].name}</div>
                   <div className="podium-score-1">
-                    {top3[0].totalScore > 0 ? '+' : ''}{top3[0].totalScore}
+                    {fmtLb(top3[0].lb)}
                   </div>
                 </div>
-                <div className="podium-games-1">{top3[0].gamesPlayed} games</div>
+                <div className="podium-games-1">{top3[0].tablesCounted} Spiele · {top3[0].elo}</div>
               </div>
             )}
 
@@ -413,9 +366,9 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
                 <div className="podium-number podium-number-3">3</div>
                 <div className="text-center">
                   <div className="podium-name">{top3[2].name}</div>
-                  <div className="podium-score">{top3[2].totalScore > 0 ? '+' : ''}{top3[2].totalScore}</div>
+                  <div className="podium-score">{fmtLb(top3[2].lb)}</div>
                 </div>
-                <div className="podium-games">{top3[2].gamesPlayed} games</div>
+                <div className="podium-games">{top3[2].tablesCounted} Spiele · {top3[2].elo}</div>
               </div>
             )}
           </div>
@@ -430,8 +383,9 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
                   <tr>
                     <th className="t-header-cell">Rank</th>
                     <th className="t-header-cell">Player</th>
-                    <th className="t-header-cell-right">Games</th>
-                    <th className="t-header-cell-right">Score</th>
+                    <th className="t-header-cell-right">Spiele</th>
+                    <th className="t-header-cell-right">Elo</th>
+                    <th className="t-header-cell-right">Ø LB</th>
                   </tr>
                 </thead>
                 <tbody className="t-body">
@@ -456,13 +410,16 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
                           <div className="player-name-text">{player.name}</div>
                         </td>
                         <td className="t-cell-right">
-                          <span className="games-text">{player.gamesPlayed}</span>
+                          <span className="games-text">{player.tablesCounted}</span>
                         </td>
                         <td className="t-cell-right">
-                          <span className={`score-text ${player.totalScore > 0 ? 'score-positive' :
-                            player.totalScore < 0 ? 'score-negative' : 'score-neutral'
+                          <span className="score-text text-blue-600">{player.elo}</span>
+                        </td>
+                        <td className="t-cell-right">
+                          <span className={`score-text ${player.lb > 0 ? 'score-positive' :
+                            player.lb < 0 ? 'score-negative' : 'score-neutral'
                             }`}>
-                            {player.totalScore > 0 ? '+' : ''}{player.totalScore}
+                            {fmtLb(player.lb)}
                           </span>
                         </td>
                       </tr>
