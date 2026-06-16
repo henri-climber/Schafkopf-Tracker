@@ -66,3 +66,27 @@ export function computeTTRatings(
 
   return ratings
 }
+
+// Pool eines Matches anhand der tatsaechlichen Team-Groessen:
+// 1v1 -> Einzel; alles andere (2v2, 1v3, ...) -> Doppel (fuer alle Beteiligten).
+export type TTPool = 'einzel' | 'doppel'
+
+export function matchPool(sideA: number[], sideB: number[]): TTPool {
+  return sideA.length === 1 && sideB.length === 1 ? 'einzel' : 'doppel'
+}
+
+/**
+ * Wie computeTTRatings, aber getrennt nach Einzel- und Doppel-Pool. Jeder
+ * Spieler erhaelt dadurch eine eigene Einzel- und eine eigene Doppel-Elo.
+ */
+export function computeTTRatingsSplit(
+  matches: TTEloMatchInput[],
+  options?: { kFactor?: number; baseRating?: number }
+): { einzel: Map<number, TTPlayerRating>; doppel: Map<number, TTPlayerRating> } {
+  const einzel = matches.filter(m => matchPool(m.sideA, m.sideB) === 'einzel')
+  const doppel = matches.filter(m => matchPool(m.sideA, m.sideB) === 'doppel')
+  return {
+    einzel: computeTTRatings(einzel, options),
+    doppel: computeTTRatings(doppel, options),
+  }
+}

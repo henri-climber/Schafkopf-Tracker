@@ -1,6 +1,15 @@
-import type { TTSet, TTSide } from './supabase'
+import type { TTFormat, TTSet, TTSide } from './supabase'
 
 // Domaenen-Helfer fuer Tischtennis-Scoring (Saetze -> Gewinner).
+
+/**
+ * Anzeige-Label fuer das Match-Format. Bei Doppel mit ungleichen oder
+ * ueber-2er Teams (z.B. 1v3) werden die Teamgroessen angehaengt: "Doppel 1v3".
+ */
+export function ttFormatLabel(format: TTFormat, aCount: number, bCount: number): string {
+  if (format === 'singles') return 'Einzel'
+  return aCount === 2 && bCount === 2 ? 'Doppel' : `Doppel ${aCount}v${bCount}`
+}
 
 /**
  * Ist ein Satz nach offiziellen Tischtennis-Regeln entschieden?

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import type { TTSide } from '../../lib/supabase'
-import { computeTTRatings, type TTEloMatchInput } from '../../lib/elo'
+import { computeTTRatingsSplit, type TTEloMatchInput, type TTPlayerRating, type TTPool } from '../../lib/elo'
 import { matchWinner } from '../../lib/tt'
 import '../Leaderboard.css'
 
@@ -23,7 +23,9 @@ interface MatchRow {
 
 export function TTLeaderboard() {
   const navigate = useNavigate()
-  const [rows, setRows] = useState<Row[]>([])
+  const [einzelRows, setEinzelRows] = useState<Row[]>([])
+  const [doppelRows, setDoppelRows] = useState<Row[]>([])
+  const [pool, setPool] = useState<TTPool>('einzel')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -59,19 +61,21 @@ export function TTLeaderboard() {
         inputs.push({ sideA, sideB, winner })
       }
 
-      const ratings = computeTTRatings(inputs)
-      const result: Row[] = Array.from(ratings.values())
-        .filter(r => r.games > 0)
-        .map(r => ({
-          id: r.playerId,
-          name: nameById.get(r.playerId) ?? `#${r.playerId}`,
-          rating: Math.round(r.rating),
-          games: r.games,
-          wins: r.wins,
-        }))
-        .sort((a, b) => b.rating - a.rating || b.wins - a.wins || a.name.localeCompare(b.name))
+      const toRows = (ratings: Map<number, TTPlayerRating>): Row[] =>
+        Array.from(ratings.values())
+          .filter(r => r.games > 0)
+          .map(r => ({
+            id: r.playerId,
+            name: nameById.get(r.playerId) ?? `#${r.playerId}`,
+            rating: Math.round(r.rating),
+            games: r.games,
+            wins: r.wins,
+          }))
+          .sort((a, b) => b.rating - a.rating || b.wins - a.wins || a.name.localeCompare(b.name))
 
-      setRows(result)
+      const { einzel, doppel } = computeTTRatingsSplit(inputs)
+      setEinzelRows(toRows(einzel))
+      setDoppelRows(toRows(doppel))
     } catch (err) {
       console.error('Error loading TT leaderboard:', err)
       setError(err instanceof Error ? err.message : 'An error occurred')
@@ -88,7 +92,31 @@ export function TTLeaderboard() {
 
   if (error) return <div className="error-container">Error: {error}</div>
 
+  const rows = pool === 'einzel' ? einzelRows : doppelRows
   const top3 = rows.slice(0, 3)
+
+  const poolToggle = (
+    <div className="tt-pool-toggle" role="tablist" aria-label="Wertung wählen">
+      <button
+        type="button"
+        role="tab"
+        aria-selected={pool === 'einzel'}
+        onClick={() => setPool('einzel')}
+        className={`tt-pool-btn${pool === 'einzel' ? ' active' : ''}`}
+      >
+        Einzel
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={pool === 'doppel'}
+        onClick={() => setPool('doppel')}
+        className={`tt-pool-btn${pool === 'doppel' ? ' active' : ''}`}
+      >
+        Doppel
+      </button>
+    </div>
+  )
 
   return (
     <div className="leaderboard-page">
@@ -108,6 +136,7 @@ export function TTLeaderboard() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
+          {poolToggle}
         </div>
       </div>
 
@@ -119,6 +148,7 @@ export function TTLeaderboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
+            {poolToggle}
           </div>
         </div>
       </div>
@@ -207,7 +237,7 @@ export function TTLeaderboard() {
           </div>
         ) : (
           <div className="text-center text-gray-500 py-12">
-            Noch keine abgeschlossenen Matches. Spiele ein Match und schließe es, um Elo zu sehen.
+            Noch keine abgeschlossenen {pool === 'einzel' ? 'Einzel' : 'Doppel'}-Matches. Spiele ein Match und schließe es, um Elo zu sehen.
           </div>
         )}
       </div>

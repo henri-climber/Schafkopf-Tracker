@@ -15,6 +15,7 @@ import {
   TableCellsIcon,
 } from '@heroicons/react/24/outline'
 import { SportToggle } from '../../components/SportToggle'
+import { ttFormatLabel } from '../../lib/tt'
 import '../Home.css'
 
 interface Player {
@@ -39,6 +40,7 @@ interface TTMatchRow {
 }
 
 const BEST_OF_PRESETS = [1, 3, 5, 7] as const
+const DOUBLES_MAX_PER_SIDE = 4
 
 export function TTHome() {
   const navigate = useNavigate()
@@ -59,11 +61,16 @@ export function TTHome() {
   const [searchTerm, setSearchTerm] = useState('')
   const [creating, setCreating] = useState(false)
 
-  const perSide = format === 'singles' ? 1 : 2
+  // Einzel: exakt 1 pro Seite. Doppel: variable Teamgroessen (>=1, max DOUBLES_MAX),
+  // aber niemals 1v1 (sonst gehoert es in die Einzel-Wertung).
+  const maxPerSide = format === 'singles' ? 1 : DOUBLES_MAX_PER_SIDE
   const filteredPlayers = players.filter(p =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
-  const canCreate = sideA.length === perSide && sideB.length === perSide
+  const canCreate =
+    format === 'singles'
+      ? sideA.length === 1 && sideB.length === 1
+      : sideA.length >= 1 && sideB.length >= 1 && (sideA.length >= 2 || sideB.length >= 2)
 
   useEffect(() => {
     loadActiveMatches()
@@ -81,9 +88,9 @@ export function TTHome() {
 
   // Bei Format-Wechsel ueberzaehlige Spieler abschneiden
   useEffect(() => {
-    setSideA(prev => prev.slice(0, perSide))
-    setSideB(prev => prev.slice(0, perSide))
-  }, [perSide])
+    setSideA(prev => prev.slice(0, maxPerSide))
+    setSideB(prev => prev.slice(0, maxPerSide))
+  }, [maxPerSide])
 
   async function loadActiveMatches() {
     try {
@@ -135,10 +142,10 @@ export function TTHome() {
 
     // Dem aktiven Team hinzufuegen, solange Platz ist
     if (activeTarget === 'A') {
-      if (sideA.length >= perSide) return
+      if (sideA.length >= maxPerSide) return
       setSideA(prev => [...prev, playerId])
     } else {
-      if (sideB.length >= perSide) return
+      if (sideB.length >= maxPerSide) return
       setSideB(prev => [...prev, playerId])
     }
   }
@@ -285,7 +292,11 @@ export function TTHome() {
                   <div className="game-card-header">
                     <span className="game-card-badge">Active</span>
                     <span className="tt-format-badge">
-                      {match.format === 'singles' ? 'Einzel' : 'Doppel'} · BO{match.best_of}
+                      {ttFormatLabel(
+                        match.format,
+                        (match.tt_match_players ?? []).filter(p => p.side === 'A').length,
+                        (match.tt_match_players ?? []).filter(p => p.side === 'B').length,
+                      )} · BO{match.best_of}
                     </span>
                   </div>
                   {match.name && <div className="game-card-title">{match.name}</div>}
@@ -356,7 +367,7 @@ export function TTHome() {
                       onClick={() => setFormat('doubles')}
                       className={`tt-segment-btn${format === 'doubles' ? ' active' : ''}`}
                     >
-                      Doppel (2v2)
+                      Doppel (Teams)
                     </button>
                   </div>
                 </div>
@@ -410,7 +421,9 @@ export function TTHome() {
                   <div className="player-section-header">
                     <label className="player-section-label">
                       <UserGroupIcon className="w-4 h-4" />
-                      Teams ({perSide} pro Seite)
+                      {format === 'singles'
+                        ? 'Teams (1 pro Seite)'
+                        : `Teams (1–${DOUBLES_MAX_PER_SIDE} pro Seite, ungleich erlaubt)`}
                     </label>
                   </div>
 
