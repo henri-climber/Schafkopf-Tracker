@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import type { TTMatch, TTSet, TTSide } from '../../lib/supabase'
-import { matchWinner, setsWon, setsNeeded, isSetDecided } from '../../lib/tt'
+import { matchWinner, setsWon, setsNeeded, isSetDecided, ttFormatLabel } from '../../lib/tt'
 import { LockOpenIcon, LockClosedIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
 import '../GameDetails.css'
 import './TTMatchDetails.css'
@@ -213,7 +213,7 @@ export function TTMatchDetails() {
           <div className="nav-title-group">
             <h1 className="game-title">{title}</h1>
             <p className="game-subtitle">
-              {new Date(match.created_at).toLocaleDateString()} • {match.format === 'singles' ? 'Einzel' : 'Doppel'} • BO{match.best_of}
+              {new Date(match.created_at).toLocaleDateString()} • {ttFormatLabel(match.format, teamA.length, teamB.length)} • BO{match.best_of}
             </p>
           </div>
         </div>

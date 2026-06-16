@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { supabase } from '../../lib/supabase'
 import type { TTFormat, TTSide } from '../../lib/supabase'
-import { setsWon, matchWinner } from '../../lib/tt'
+import { setsWon, matchWinner, ttFormatLabel } from '../../lib/tt'
 import '../PastGames.css'
 
 interface Player {
@@ -92,7 +92,11 @@ export function TTPastMatches() {
                     <span className={winner === 'B' ? 'text-emerald-400 font-bold' : ''}>{teamName(m, 'B')}</span>
                   </div>
                   <div className="past-game-date">
-                    {m.format === 'singles' ? 'Einzel' : 'Doppel'} · BO{m.best_of} · {new Date(m.created_at).toLocaleDateString()}
+                    {ttFormatLabel(
+                      m.format,
+                      m.tt_match_players.filter(p => p.side === 'A').length,
+                      m.tt_match_players.filter(p => p.side === 'B').length,
+                    )} · BO{m.best_of} · {new Date(m.created_at).toLocaleDateString()}
                   </div>
                   <div className={`past-game-badge ${m.exclude_from_overall ? 'past-game-badge-excluded' : 'past-game-badge-included'}`}>
                     {m.exclude_from_overall ? 'Excluded' : 'Included'}
