@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router'
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '@/shared/supabase/client'
 import {
   TrophyIcon,
   PlusIcon,
@@ -13,10 +13,8 @@ import {
   ArrowRightIcon,
   TableCellsIcon,
 } from '@heroicons/react/24/outline'
-import { useSportMode } from '../context/SportModeContext'
-import { SportToggle } from '../components/SportToggle'
-import { TTHome } from './tt/TTHome'
-import './Home.css'
+import { SportToggle } from '@/shared/sport-mode/SportToggle'
+import '@/shared/styles/home.css'
 
 interface TablePlayer {
   player_id: number
@@ -37,13 +35,7 @@ interface Player {
   name: string
 }
 
-export function Home() {
-  const { mode } = useSportMode()
-  if (mode === 'tt') return <TTHome />
-  return <SchafkopfHome />
-}
-
-function SchafkopfHome() {
+export function HomePage() {
   const navigate = useNavigate()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [tableName, setTableName] = useState('')

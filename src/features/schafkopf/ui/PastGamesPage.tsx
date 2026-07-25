@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { supabase } from '../lib/supabase'
+import { supabase } from '@/shared/supabase/client'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
-import './PastGames.css'
+import '@/shared/styles/past-games.css'
 
 interface Player {
   id: number
@@ -23,7 +23,7 @@ interface Table {
   table_players?: TablePlayer[]
 }
 
-export function PastGames() {
+export function PastGamesPage() {
   const navigate = useNavigate()
   const [pastGames, setPastGames] = useState<Table[]>([])
   const [loading, setLoading] = useState(true)

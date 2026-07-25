@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { supabase } from '../lib/supabase'
-import { PlayerScoreChart } from '../components/PlayerScoreChart'
-import './Leaderboard.css'
+import { supabase } from '@/shared/supabase/client'
+import { ScoreHistoryChart } from '@/features/schafkopf/ui/ScoreHistoryChart'
+import '@/shared/styles/leaderboard.css'
 
 interface Player {
   id: number
@@ -59,7 +59,7 @@ const SEMESTER_3_OFFSETS: Record<string, number> = {
   Pfirrmann: -2,
 }
 
-export function Leaderboard() {
+export function LeaderboardPage() {
   const navigate = useNavigate()
   const [players, setPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
@@ -551,7 +551,7 @@ export function Leaderboard() {
         {/* Chart Section */}
         <div className="chart-container">
           <h3 className="chart-title">Performance History</h3>
-          <PlayerScoreChart
+          <ScoreHistoryChart
             startDate={selectedSemester.startDate}
             endDate={selectedSemester.endDate}
           />

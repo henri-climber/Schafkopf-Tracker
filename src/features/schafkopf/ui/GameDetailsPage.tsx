@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
-import { useGameSubscription } from '../hooks/useGameSubscription'
-import { supabase } from '../lib/supabase'
+import { useGameSubscription } from '@/features/schafkopf/api/useGameSubscription'
+import { supabase } from '@/shared/supabase/client'
 import type { PostgrestError } from '@supabase/supabase-js'
 import {
   createColumnHelper,
@@ -10,7 +10,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { LockOpenIcon, LockClosedIcon } from '@heroicons/react/24/outline'
-import './GameDetails.css'
+import '@/shared/styles/game-details.css'
 
 interface GameTable {
   id: number
@@ -57,7 +57,7 @@ interface RoundRow {
   scores: { [playerId: number]: number }
 }
 
-export function GameDetails() {
+export function GameDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [gameTable, setGameTable] = useState<GameTable | null>(null)

@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router'
-import { supabase } from '../../lib/supabase'
-import type { TTMatch, TTSet, TTSide } from '../../lib/supabase'
-import { matchWinner, setsWon, setsNeeded, isSetDecided } from '../../lib/tt'
+import { supabase } from '@/shared/supabase/client'
+import type { TTMatch, TTSet, TTSide } from '@/shared/supabase/client'
+import { matchWinner, setsWon, setsNeeded, isSetDecided } from '@/features/tabletennis/domain/tt'
 import { LockOpenIcon, LockClosedIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
-import '../GameDetails.css'
-import './TTMatchDetails.css'
+import '@/shared/styles/game-details.css'
+import '@/features/tabletennis/ui/TTMatchPage.css'
 
 interface Player {
   id: number
@@ -18,7 +18,7 @@ interface MatchPlayer {
   player: Player
 }
 
-export function TTMatchDetails() {
+export function TTMatchPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 

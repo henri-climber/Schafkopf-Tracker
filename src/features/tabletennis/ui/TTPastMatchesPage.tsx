@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
-import { supabase } from '../../lib/supabase'
-import type { TTFormat, TTSide } from '../../lib/supabase'
-import { setsWon, matchWinner } from '../../lib/tt'
-import '../PastGames.css'
+import { supabase } from '@/shared/supabase/client'
+import type { TTFormat, TTSide } from '@/shared/supabase/client'
+import { setsWon, matchWinner } from '@/features/tabletennis/domain/tt'
+import '@/shared/styles/past-games.css'
 
 interface Player {
   id: number
@@ -28,7 +28,7 @@ interface MatchRow {
   tt_sets: { score_a: number; score_b: number }[]
 }
 
-export function TTPastMatches() {
+export function TTPastMatchesPage() {
   const navigate = useNavigate()
   const [matches, setMatches] = useState<MatchRow[]>([])
   const [loading, setLoading] = useState(true)

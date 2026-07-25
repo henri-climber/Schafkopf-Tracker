@@ -1,4 +1,4 @@
-import type { TTSet, TTSide } from './supabase'
+import type { TTSet, TTSide } from '@/shared/supabase/client'
 
 // Domaenen-Helfer fuer Tischtennis-Scoring (Saetze -> Gewinner).
 

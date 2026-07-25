@@ -9,8 +9,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-import { supabase } from '../lib/supabase'
-import './PlayerScoreChart.css'
+import { supabase } from '@/shared/supabase/client'
+import '@/features/schafkopf/ui/ScoreHistoryChart.css'
 
 interface PlayerData {
   id: number
@@ -77,7 +77,7 @@ interface Props {
   endDate: string
 }
 
-export function PlayerScoreChart({ startDate, endDate }: Props) {
+export function ScoreHistoryChart({ startDate, endDate }: Props) {
   const [chartData, setChartData] = useState<ChartData[]>([])
   const [players, setPlayers] = useState<PlayerScore[]>([])
   const [loading, setLoading] = useState(true)

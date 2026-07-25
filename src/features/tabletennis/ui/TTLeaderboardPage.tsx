@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { supabase } from '../../lib/supabase'
-import type { TTSide } from '../../lib/supabase'
-import { computeTTRatings, type TTEloMatchInput } from '../../lib/elo'
-import { matchWinner } from '../../lib/tt'
-import '../Leaderboard.css'
+import { supabase } from '@/shared/supabase/client'
+import type { TTSide } from '@/shared/supabase/client'
+import { computeTTRatings, type TTEloMatchInput } from '@/features/tabletennis/domain/elo'
+import { matchWinner } from '@/features/tabletennis/domain/tt'
+import '@/shared/styles/leaderboard.css'
 
 interface Row {
   id: number
@@ -21,7 +21,7 @@ interface MatchRow {
   tt_sets: { score_a: number; score_b: number }[]
 }
 
-export function TTLeaderboard() {
+export function TTLeaderboardPage() {
   const navigate = useNavigate()
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(true)

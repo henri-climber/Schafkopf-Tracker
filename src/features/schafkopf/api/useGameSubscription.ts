@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { supabase, type RoundScore } from '../lib/supabase'
+import { supabase, type RoundScore } from '@/shared/supabase/client'
 import { RealtimeChannel } from '@supabase/supabase-js'
 
 interface UseGameSubscriptionProps {

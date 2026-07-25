@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router'
 import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabase'
-import type { TTFormat, TTSide } from '../../lib/supabase'
+import { supabase } from '@/shared/supabase/client'
+import type { TTFormat, TTSide } from '@/shared/supabase/client'
 import {
   TrophyIcon,
   PlusIcon,
@@ -14,8 +14,8 @@ import {
   ArrowRightIcon,
   TableCellsIcon,
 } from '@heroicons/react/24/outline'
-import { SportToggle } from '../../components/SportToggle'
-import '../Home.css'
+import { SportToggle } from '@/shared/sport-mode/SportToggle'
+import '@/shared/styles/home.css'
 
 interface Player {
   id: number
@@ -40,7 +40,7 @@ interface TTMatchRow {
 
 const BEST_OF_PRESETS = [1, 3, 5, 7] as const
 
-export function TTHome() {
+export function TTHomePage() {
   const navigate = useNavigate()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [matchName, setMatchName] = useState('')
