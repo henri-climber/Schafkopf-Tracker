@@ -3,11 +3,10 @@ import { useNavigate } from 'react-router'
 import { supabase } from '@/shared/supabase/client'
 import { ScoreHistoryChart } from '@/features/schafkopf/ui/ScoreHistoryChart'
 import '@/shared/styles/leaderboard.css'
+import type { Player as PlayerRow } from '@/shared/supabase/types'
 
-interface Player {
-  id: number
-  name: string
-  created_at: string
+/** A player row plus the standings the leaderboard computes for it. */
+interface Player extends PlayerRow {
   totalScore: number
   gamesPlayed: number
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { supabase } from '@/shared/supabase/client'
-import type { TTSide } from '@/shared/supabase/client'
+import type { TTSide } from '@/shared/supabase/types'
 import { computeTTRatings, type TTEloMatchInput } from '@/features/tabletennis/domain/elo'
 import { matchWinner } from '@/features/tabletennis/domain/tt'
 import '@/shared/styles/leaderboard.css'

@@ -76,6 +76,30 @@ npm run format       # prettier --write .
 npm run types:db     # regenerate Supabase types (requires `supabase login`)
 ```
 
+## Database
+
+The schema lives in the hosted Supabase project. Two things track it in git:
+
+- **`src/shared/supabase/database.types.ts`** — generated, committed. This is the
+  authoritative record of the schema's _shape_; its diffs read as a changelog.
+  Regenerate with `npm run types:db` after any schema change. If that produces a
+  diff you did not expect, the hosted schema drifted.
+- **`supabase/migrations/`** — forward DDL changes, one file each.
+
+There is no baseline dump yet: the project was built without migrations, so the
+existing tables have no `CREATE TABLE` on record. To capture one (needs an
+interactive login, so it has to be done by hand once):
+
+```bash
+npx supabase login
+npx supabase link --project-ref jzxoesdbgykmqzmllrqc
+npx supabase db dump --schema public -f supabase/migrations/00000000000000_baseline.sql
+npx supabase migration repair --status applied 00000000000000
+```
+
+The `repair` step matters — without it the first `db push` tries to recreate
+every table.
+
 ## Known Limitations
 
 **There is no authentication, and the database is not access-controlled.** The

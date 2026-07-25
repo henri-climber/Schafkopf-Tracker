@@ -2,14 +2,12 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { supabase } from '@/shared/supabase/client'
-import type { TTFormat, TTSide } from '@/shared/supabase/client'
+import type { TTFormat, TTSide, TTMatch, Player as PlayerRow } from '@/shared/supabase/types'
 import { setsWon, matchWinner } from '@/features/tabletennis/domain/tt'
 import '@/shared/styles/past-games.css'
 
-interface Player {
-  id: number
-  name: string
-}
+/** Only the columns the player list actually selects. */
+type Player = Pick<PlayerRow, 'id' | 'name'>
 
 interface MatchPlayer {
   player_id: number
@@ -17,13 +15,12 @@ interface MatchPlayer {
   player: Player
 }
 
-interface MatchRow {
-  id: number
-  name: string | null
-  created_at: string
+/**
+ * A match plus its nested players and sets. `format` is narrowed from the
+ * generated `string` to the two values the CHECK constraint permits.
+ */
+interface MatchRow extends Omit<TTMatch, 'format' | 'is_open'> {
   format: TTFormat
-  best_of: number
-  exclude_from_overall: boolean
   tt_match_players: MatchPlayer[]
   tt_sets: { score_a: number; score_b: number }[]
 }
@@ -46,8 +43,9 @@ export function TTPastMatchesPage() {
         )
         .eq('is_open', false)
         .order('created_at', { ascending: false })
+        .returns<MatchRow[]>()
       if (error) throw error
-      setMatches((data as unknown as MatchRow[]) || [])
+      setMatches(data || [])
     } catch (error) {
       console.error('Error loading past TT matches:', error)
     } finally {

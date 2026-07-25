@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useGameSubscription } from '@/features/schafkopf/api/useGameSubscription'
 import { supabase } from '@/shared/supabase/client'
-import type { PostgrestError } from '@supabase/supabase-js'
 import {
   createColumnHelper,
   flexRender,
@@ -11,39 +10,17 @@ import {
 } from '@tanstack/react-table'
 import { LockOpenIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 import '@/shared/styles/game-details.css'
+import type {
+  GameTable,
+  Player,
+  Round,
+  RoundScore,
+  TablePlayer as TablePlayerRow,
+} from '@/shared/supabase/types'
 
-interface GameTable {
-  id: number
-  name: string
-  created_at: string
-  is_open: boolean
-  exclude_from_overall: boolean
-}
-
-interface Player {
-  id: number
-  name: string
-  created_at: string
-}
-
-interface TablePlayer {
-  player_id: number
-  table_id: number
+/** table_players joined to its player — the shape the nested select returns. */
+interface TablePlayer extends TablePlayerRow {
   player: Player
-}
-
-interface Round {
-  id: number
-  table_id: number
-  round_number: number
-  created_at: string
-}
-
-interface RoundScore {
-  round_id: number
-  player_id: number
-  raw_score: number
-  created_at: string
 }
 
 interface AvailablePlayer extends Player {
@@ -59,6 +36,9 @@ interface RoundRow {
 
 export function GameDetailsPage() {
   const { id } = useParams<{ id: string }>()
+  // The route param is a string; the id columns are bigint. PostgREST coerced
+  // this silently before the client was typed — now it is explicit.
+  const tableId = Number(id)
   const navigate = useNavigate()
   const [gameTable, setGameTable] = useState<GameTable | null>(null)
   const [players, setPlayers] = useState<Player[]>([])
@@ -87,14 +67,14 @@ export function GameDetailsPage() {
       const { data: tableData, error: tableError } = await supabase
         .from('Tables')
         .select('*')
-        .eq('id', id)
+        .eq('id', tableId)
         .single()
 
       if (tableError) throw tableError
       setGameTable(tableData)
 
       // 2. Load players
-      const { data: tablePlayers, error: playersError } = (await supabase
+      const { data: tablePlayers, error: playersError } = await supabase
         .from('table_players')
         .select(
           `
@@ -103,7 +83,8 @@ export function GameDetailsPage() {
           player:Players (id, name, created_at)
         `,
         )
-        .eq('table_id', id)) as { data: TablePlayer[] | null; error: PostgrestError | null }
+        .eq('table_id', tableId)
+        .returns<TablePlayer[]>()
 
       if (playersError) throw playersError
 
@@ -115,7 +96,7 @@ export function GameDetailsPage() {
       const { data: roundsData, error: roundsError } = await supabase
         .from('Rounds')
         .select('*')
-        .eq('table_id', id)
+        .eq('table_id', tableId)
         .order('round_number', { ascending: true })
 
       if (roundsError) throw roundsError
@@ -138,7 +119,7 @@ export function GameDetailsPage() {
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [tableId])
 
   const handleScoreUpdateRealtime = useCallback((newScore: RoundScore) => {
     setRoundScores((prev) => {
@@ -368,7 +349,7 @@ export function GameDetailsPage() {
     const newRoundNumber = rounds.length + 1
     const { data: newRound, error } = await supabase
       .from('Rounds')
-      .insert([{ table_id: id, round_number: newRoundNumber }])
+      .insert([{ table_id: tableId, round_number: newRoundNumber }])
       .select()
       .single()
 
@@ -397,7 +378,7 @@ export function GameDetailsPage() {
   const handleToggleIsOpen = async () => {
     if (!gameTable) return
     const newValue = !gameTable.is_open
-    const { error } = await supabase.from('Tables').update({ is_open: newValue }).eq('id', id)
+    const { error } = await supabase.from('Tables').update({ is_open: newValue }).eq('id', tableId)
 
     if (error) {
       console.error('Error toggling is_open:', error)
@@ -413,7 +394,7 @@ export function GameDetailsPage() {
     const { error } = await supabase
       .from('Tables')
       .update({ exclude_from_overall: newValue })
-      .eq('id', id)
+      .eq('id', tableId)
 
     if (error) {
       console.error('Error toggling exclude_from_overall:', error)
@@ -425,7 +406,7 @@ export function GameDetailsPage() {
 
   const handleAddPlayerToGame = async (playerId: number) => {
     try {
-      await supabase.from('table_players').insert([{ table_id: id, player_id: playerId }])
+      await supabase.from('table_players').insert([{ table_id: tableId, player_id: playerId }])
 
       const scores = rounds.map((r) => ({
         round_id: r.id,

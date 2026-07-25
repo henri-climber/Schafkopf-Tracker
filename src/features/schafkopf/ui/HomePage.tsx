@@ -15,24 +15,19 @@ import {
 } from '@heroicons/react/24/outline'
 import { SportToggle } from '@/shared/sport-mode/SportToggle'
 import '@/shared/styles/home.css'
+import type { GameTable, Player as PlayerRow } from '@/shared/supabase/types'
+
+/** Only the columns the player list actually selects. */
+type Player = Pick<PlayerRow, 'id' | 'name'>
 
 interface TablePlayer {
   player_id: number
   player: Player
 }
 
-interface Table {
-  id: number
-  name: string
-  created_at: string
-  is_open: boolean
-  exclude_from_overall: boolean
+/** A table plus its nested players, as returned by the embedded select. */
+interface Table extends GameTable {
   table_players?: TablePlayer[]
-}
-
-interface Player {
-  id: number
-  name: string
 }
 
 export function HomePage() {

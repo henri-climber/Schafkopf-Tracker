@@ -11,12 +11,7 @@ import {
 } from 'recharts'
 import { supabase } from '@/shared/supabase/client'
 import '@/features/schafkopf/ui/ScoreHistoryChart.css'
-
-interface PlayerData {
-  id: number
-  name: string
-  created_at: string
-}
+import type { Player as PlayerData } from '@/shared/supabase/types'
 
 interface PlayerScore {
   id: number

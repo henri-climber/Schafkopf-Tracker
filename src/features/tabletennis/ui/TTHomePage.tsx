@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/shared/supabase/client'
-import type { TTFormat, TTSide } from '@/shared/supabase/client'
+import type { TTFormat, TTSide, TTMatch, Player as PlayerRow } from '@/shared/supabase/types'
 import {
   TrophyIcon,
   PlusIcon,
@@ -17,10 +17,8 @@ import {
 import { SportToggle } from '@/shared/sport-mode/SportToggle'
 import '@/shared/styles/home.css'
 
-interface Player {
-  id: number
-  name: string
-}
+/** Only the columns the player list actually selects. */
+type Player = Pick<PlayerRow, 'id' | 'name'>
 
 interface MatchPlayer {
   player_id: number
@@ -28,13 +26,12 @@ interface MatchPlayer {
   player: Player
 }
 
-interface TTMatchRow {
-  id: number
-  name: string | null
-  created_at: string
+/**
+ * A match plus its nested players. `format` is narrowed from the generated
+ * `string` to the two values the CHECK constraint permits.
+ */
+interface TTMatchRow extends Omit<TTMatch, 'format' | 'exclude_from_overall'> {
   format: TTFormat
-  best_of: number
-  is_open: boolean
   tt_match_players?: MatchPlayer[]
 }
 
@@ -92,9 +89,10 @@ export function TTHomePage() {
         .select('*, tt_match_players(player_id, side, player:Players(id, name))')
         .eq('is_open', true)
         .order('created_at', { ascending: false })
+        .returns<TTMatchRow[]>()
 
       if (error) throw error
-      setActiveMatches((data as unknown as TTMatchRow[]) || [])
+      setActiveMatches(data || [])
     } catch (error) {
       console.error('Error loading active TT matches:', error)
     } finally {

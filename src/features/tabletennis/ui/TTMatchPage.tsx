@@ -1,16 +1,14 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { supabase } from '@/shared/supabase/client'
-import type { TTMatch, TTSet, TTSide } from '@/shared/supabase/client'
+import type { TTMatch, TTSet, TTSide, Player as PlayerRow } from '@/shared/supabase/types'
 import { matchWinner, setsWon, setsNeeded, isSetDecided } from '@/features/tabletennis/domain/tt'
 import { LockOpenIcon, LockClosedIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
 import '@/shared/styles/game-details.css'
 import '@/features/tabletennis/ui/TTMatchPage.css'
 
-interface Player {
-  id: number
-  name: string
-}
+/** Only the columns the player list actually selects. */
+type Player = Pick<PlayerRow, 'id' | 'name'>
 
 interface MatchPlayer {
   player_id: number
@@ -20,6 +18,9 @@ interface MatchPlayer {
 
 export function TTMatchPage() {
   const { id } = useParams<{ id: string }>()
+  // The route param is a string; the id columns are bigint. PostgREST coerced
+  // this silently before the client was typed — now it is explicit.
+  const matchId = Number(id)
   const navigate = useNavigate()
 
   const [match, setMatch] = useState<TTMatch | null>(null)
@@ -35,22 +36,23 @@ export function TTMatchPage() {
       const { data: matchData, error: matchError } = await supabase
         .from('tt_matches')
         .select('*')
-        .eq('id', id)
+        .eq('id', matchId)
         .single()
       if (matchError) throw matchError
       setMatch(matchData)
 
-      const { data: playersData, error: playersError } = (await supabase
+      const { data: playersData, error: playersError } = await supabase
         .from('tt_match_players')
         .select('player_id, side, player:Players(id, name)')
-        .eq('match_id', id)) as { data: MatchPlayer[] | null; error: unknown }
+        .eq('match_id', matchId)
+        .returns<MatchPlayer[]>()
       if (playersError) throw playersError
       setMatchPlayers(playersData || [])
 
       const { data: setsData, error: setsError } = await supabase
         .from('tt_sets')
         .select('*')
-        .eq('match_id', id)
+        .eq('match_id', matchId)
         .order('set_number', { ascending: true })
       if (setsError) throw setsError
       setSets(setsData || [])
@@ -60,7 +62,7 @@ export function TTMatchPage() {
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [matchId])
 
   useEffect(() => {
     if (!id) return
@@ -83,10 +85,10 @@ export function TTMatchPage() {
   }
 
   async function persistSet(setId: number, field: 'score_a' | 'score_b', value: number) {
-    const { error: err } = await supabase
-      .from('tt_sets')
-      .update({ [field]: value })
-      .eq('id', setId)
+    // A computed key widens to `{ [x: string]: number }`, which the typed client
+    // rejects as possibly-excess. The field is already narrowed to two literals.
+    const patch = field === 'score_a' ? { score_a: value } : { score_b: value }
+    const { error: err } = await supabase.from('tt_sets').update(patch).eq('id', setId)
     if (err) {
       console.error('Error updating set:', err)
       loadMatch()
