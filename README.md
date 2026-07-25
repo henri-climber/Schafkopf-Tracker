@@ -55,8 +55,8 @@ VITE_SUPABASE_URL_SCHAF=your_supabase_url
 VITE_SUPABASE_ANON_KEY_SCHAF=your_supabase_anon_key
 ```
 
-Both are required — `src/lib/supabase.ts` throws at import time if either is
-missing, so the app will not boot without them.
+Both are required — `src/shared/supabase/client.ts` throws at import time if
+either is missing, so the app will not boot without them.
 
 ### 4. Run the Development Server
 
@@ -116,16 +116,26 @@ The UI also mixes German and English labels, which is untidy but harmless.
 
 ## Project Structure
 
-Here's a quick overview of the project's structure:
+The code is organised by feature, not by file type. Each sport is a slice that
+owns its own rules, queries and screens.
 
-- **`src/components/`**: Reusable UI components used throughout the application.
-- **`src/pages/`**: Main application views:
-  - `Home.tsx`: The landing page and game tracking interface.
-  - `Leaderboard.tsx`: Displays player rankings.
-  - `PastGames.tsx`: Shows a history of recorded games.
-  - `GameDetails.tsx`: Detailed view of a specific game.
-- **`src/lib/`**: Utility functions and Supabase client configuration.
-- **`src/assets/`**: Static assets like images and global styles.
+```
+src/
+  app/          route table and the sport-mode dispatcher for `/`
+  shared/       supabase client + generated types, sport-mode context, styles
+  features/
+    schafkopf/  domain/ (pure scoring rules) · api/ (queries) · ui/ (screens)
+    tabletennis/ same shape; lightly used
+    players/    the Players table and player-picker UI, shared by both sports
+```
+
+**One import rule:** `schafkopf` and `tabletennis` may both import from
+`players` and `shared`, never from each other, and `shared` never imports from
+`features`. `/` is the only route both sports share, which is why its dispatcher
+lives in `app/` rather than inside either slice.
+
+Use the `@/` alias for imports that cross a slice boundary and relative paths
+within a slice — so a `../../../` in a diff is a visible smell.
 
 ## Contributing
 
