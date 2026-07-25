@@ -6,13 +6,13 @@ import { PastGamesPage } from '@/features/schafkopf/ui/PastGamesPage'
 import { TTMatchPage } from '@/features/tabletennis/ui/TTMatchPage'
 import { TTLeaderboardPage } from '@/features/tabletennis/ui/TTLeaderboardPage'
 import { TTPastMatchesPage } from '@/features/tabletennis/ui/TTPastMatchesPage'
-import { SportModeProvider } from '@/shared/sport-mode/SportModeContext'
+import { Providers } from '@/app/Providers'
 import '@/shared/styles/app.css'
 import ScrollToTop from '@/shared/ui/ScrollToTop'
 
 function App() {
   return (
-    <SportModeProvider>
+    <Providers>
       <Router>
         <ScrollToTop />
         <div className="app-container">
@@ -29,7 +29,7 @@ function App() {
           </div>
         </div>
       </Router>
-    </SportModeProvider>
+    </Providers>
   )
 }
 

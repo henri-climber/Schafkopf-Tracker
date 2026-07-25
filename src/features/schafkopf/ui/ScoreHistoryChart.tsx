@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   LineChart,
   Line,
@@ -9,14 +9,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-import { supabase } from '@/shared/supabase/client'
 import '@/features/schafkopf/ui/ScoreHistoryChart.css'
 import type { Player as PlayerData } from '@/shared/supabase/types'
-import {
-  computeTableResults,
-  cumulativeSeries,
-  type TableWithScores,
-} from '@/features/schafkopf/domain/scoring'
+import type { SeriesPoint } from '@/features/schafkopf/domain/scoring'
 
 interface PlayerScore {
   id: number
@@ -73,15 +68,18 @@ function formatDate(timestamp: string) {
 }
 
 interface Props {
-  startDate: string
-  endDate: string
+  /** Running totals per table, from the same query the leaderboard uses. */
+  series: readonly SeriesPoint[]
+  players: readonly PlayerData[]
 }
 
-export function ScoreHistoryChart({ startDate, endDate }: Props) {
-  const [chartData, setChartData] = useState<ChartData[]>([])
-  const [players, setPlayers] = useState<PlayerScore[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+/**
+ * Purely presentational. It used to run its own copy of the leaderboard's fetch
+ * and scoring pipeline, which meant the same screen loaded the same data twice
+ * and the two panels could disagree — they filtered ongoing games differently.
+ * Now it receives the computed series and only shapes it for Recharts.
+ */
+export function ScoreHistoryChart({ series, players: playerRows }: Props) {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 800)
 
   useEffect(() => {
@@ -91,103 +89,36 @@ export function ScoreHistoryChart({ startDate, endDate }: Props) {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
-  useEffect(() => {
-    loadChartData()
-  }, [startDate, endDate])
+  const { chartData, players } = useMemo(() => {
+    const playerScores: PlayerScore[] = playerRows.map((player, index) => ({
+      id: player.id,
+      name: player.name,
+      color: COLORS[index % COLORS.length],
+      scores: [],
+    }))
+    const playersById = new Map(playerScores.map((player) => [player.id, player]))
 
-  async function loadChartData() {
-    try {
-      // 1. Get all players
-      const { data: playersData, error: playersError } = await supabase.from('Players').select('*')
-
-      if (playersError) throw playersError
-
-      // Initialize players with colors
-      const initialPlayers: PlayerScore[] = (playersData as PlayerData[]).map((player, index) => ({
-        id: player.id,
-        name: player.name,
-        color: COLORS[index % COLORS.length],
-        scores: [],
-      }))
-
-      // 2. Get all tables with their creation dates
-      const query = supabase
-        .from('Tables')
-        .select('id, created_at')
-        .eq('exclude_from_overall', false)
-        .eq('is_open', false)
-        .gte('created_at', startDate)
-        .lte('created_at', endDate)
-        .order('created_at', { ascending: true })
-
-      const { data: tablesData, error: tablesError } = await query
-
-      if (tablesError) throw tablesError
-
-      // Gather each table's scores. Still one round-trip pair per table —
-      // collapsing that is the next commit's job.
-      const tables: TableWithScores[] = []
-      for (const table of tablesData) {
-        const { data: roundsData, error: roundsError } = await supabase
-          .from('Rounds')
-          .select('id')
-          .eq('table_id', table.id)
-
-        if (roundsError) throw roundsError
-        if (!roundsData?.length) continue
-
-        const roundIds = roundsData.map((r) => r.id)
-
-        const { data: scoresData, error: scoresError } = await supabase
-          .from('round_scores')
-          .select('player_id, raw_score')
-          .in('round_id', roundIds)
-
-        if (scoresError) throw scoresError
-        tables.push({ id: table.id, created_at: table.created_at, scores: scoresData })
+    // Recharts wants one row per timestamp, keyed by player name. Players
+    // absent from a table are absent from its row, which draws a gap.
+    const timestampScores = new Map<string, { [key: string]: number }>()
+    for (const point of series) {
+      const row = timestampScores.get(point.timestamp) ?? {}
+      for (const [playerId, total] of point.totals) {
+        const player = playersById.get(playerId)
+        if (!player) continue
+        player.scores.push({ timestamp: point.timestamp, score: total })
+        row[player.name] = total
       }
-
-      // Rules live in the domain module — the same ones the leaderboard uses,
-      // so the two panels can no longer disagree.
-      const playerScores: PlayerScore[] = [...initialPlayers]
-      const playersById = new Map(playerScores.map((player) => [player.id, player]))
-      const series = cumulativeSeries(computeTableResults(tables))
-
-      // Recharts wants one row per timestamp, keyed by player name. Players
-      // absent from a table are absent from its row, which draws a gap.
-      const timestampScores = new Map<string, { [key: string]: number }>()
-      for (const point of series) {
-        const row = timestampScores.get(point.timestamp) ?? {}
-        for (const [playerId, total] of point.totals) {
-          const player = playersById.get(playerId)
-          if (!player) continue
-          player.scores.push({ timestamp: point.timestamp, score: total })
-          row[player.name] = total
-        }
-        timestampScores.set(point.timestamp, row)
-      }
-
-      const chartData = Array.from(timestampScores.entries())
-        .map(([timestamp, scores]) => ({
-          timestamp,
-          ...scores,
-        }))
-        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-
-      setPlayers(playerScores)
-      setChartData(chartData)
-    } catch (err) {
-      console.error('Error loading chart data:', err)
-      setError(
-        err instanceof Error ? err.message : 'An error occurred while loading the chart data',
-      )
-    } finally {
-      setLoading(false)
+      timestampScores.set(point.timestamp, row)
     }
-  }
 
-  if (loading) return <div className="chart-loading">Loading chart data...</div>
-  if (error) return <div className="chart-error">Error: {error}</div>
+    const rows: ChartData[] = Array.from(timestampScores.entries())
+      .map(([timestamp, scores]) => ({ timestamp, ...scores }))
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+
+    return { chartData: rows, players: playerScores }
+  }, [series, playerRows])
+
   if (!chartData.length) return <div className="chart-no-data">No data available for the chart</div>
 
   return (

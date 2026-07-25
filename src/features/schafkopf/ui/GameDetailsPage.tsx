@@ -1,7 +1,17 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
-import { useGameSubscription } from '@/features/schafkopf/api/useGameSubscription'
-import { supabase } from '@/shared/supabase/client'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTableRealtime } from '@/features/schafkopf/api/useTableRealtime'
+import { schafkopfKeys } from '@/features/schafkopf/api/queries'
+import {
+  addPlayerToTable,
+  addRound,
+  getTableDetail,
+  listRounds,
+  upsertScore,
+} from '@/features/schafkopf/api/rounds'
+import { setTableFlags } from '@/features/schafkopf/api/tables'
+import { searchPlayers as searchPlayersApi } from '@/features/players/api/players'
 import {
   createColumnHelper,
   flexRender,
@@ -10,19 +20,8 @@ import {
 } from '@tanstack/react-table'
 import { LockOpenIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 import '@/shared/styles/game-details.css'
-import type {
-  GameTable,
-  Player,
-  Round,
-  RoundScore,
-  TablePlayer as TablePlayerRow,
-} from '@/shared/supabase/types'
+import type { GameTable, Player, Round, RoundScore } from '@/shared/supabase/types'
 import { roundSum } from '@/features/schafkopf/domain/scoring'
-
-/** table_players joined to its player — the shape the nested select returns. */
-interface TablePlayer extends TablePlayerRow {
-  player: Player
-}
 
 interface AvailablePlayer extends Player {
   isSelected?: boolean
@@ -41,12 +40,7 @@ export function GameDetailsPage() {
   // this silently before the client was typed — now it is explicit.
   const tableId = Number(id)
   const navigate = useNavigate()
-  const [gameTable, setGameTable] = useState<GameTable | null>(null)
-  const [players, setPlayers] = useState<Player[]>([])
-  const [rounds, setRounds] = useState<Round[]>([])
-  const [roundScores, setRoundScores] = useState<RoundScore[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
   // UI States
   const [isAddingPlayer, setIsAddingPlayer] = useState(false)
@@ -60,100 +54,37 @@ export function GameDetailsPage() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const isTabNavigating = useRef(false)
 
-  const loadGameData = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      // 1. Load table details
-      const { data: tableData, error: tableError } = await supabase
-        .from('Tables')
-        .select('*')
-        .eq('id', tableId)
-        .single()
-
-      if (tableError) throw tableError
-      setGameTable(tableData)
-
-      // 2. Load players
-      const { data: tablePlayers, error: playersError } = await supabase
-        .from('table_players')
-        .select(
-          `
-          player_id,
-          table_id,
-          player:Players (id, name, created_at)
-        `,
-        )
-        .eq('table_id', tableId)
-        .returns<TablePlayer[]>()
-
-      if (playersError) throw playersError
-
-      // Sort players by name or ID to keep consistent order
-      const sortedPlayers = (tablePlayers?.map((tp) => tp.player) || []).sort((a, b) => a.id - b.id)
-      setPlayers(sortedPlayers)
-
-      // 3. Load rounds
-      const { data: roundsData, error: roundsError } = await supabase
-        .from('Rounds')
-        .select('*')
-        .eq('table_id', tableId)
-        .order('round_number', { ascending: true })
-
-      if (roundsError) throw roundsError
-      setRounds(roundsData || [])
-
-      // 4. Load scores
-      if (roundsData && roundsData.length > 0) {
-        const roundIds = roundsData.map((r) => r.id)
-        const { data: scoresData, error: scoresError } = await supabase
-          .from('round_scores')
-          .select('*')
-          .in('round_id', roundIds)
-
-        if (scoresError) throw scoresError
-        setRoundScores(scoresData || [])
-      }
-    } catch (err) {
-      console.error('Error loading game data:', err)
-      setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
-      setLoading(false)
-    }
-  }, [tableId])
-
-  const handleScoreUpdateRealtime = useCallback((newScore: RoundScore) => {
-    setRoundScores((prev) => {
-      // Check if we already have this score
-      const index = prev.findIndex(
-        (s) => s.round_id === newScore.round_id && s.player_id === newScore.player_id,
-      )
-
-      if (index >= 0) {
-        // Update existing score
-        const newScores = [...prev]
-        newScores[index] = { ...prev[index], raw_score: newScore.raw_score }
-        return newScores
-      } else {
-        // Add new score
-        return [...prev, newScore]
-      }
-    })
-  }, [])
-
-  useGameSubscription({
-    gameId: id || '',
-    roundIds: useMemo(() => rounds.map((r) => r.id), [rounds]),
-    onGameUpdate: loadGameData,
-    onPlayerUpdate: loadGameData,
-    onRoundsUpdate: loadGameData,
-    onScoreUpdate: handleScoreUpdateRealtime,
+  const detailQuery = useQuery({
+    queryKey: schafkopfKeys.table(tableId),
+    queryFn: () => getTableDetail(tableId),
+    enabled: Number.isFinite(tableId),
+  })
+  const roundsQuery = useQuery({
+    queryKey: schafkopfKeys.rounds(tableId),
+    queryFn: () => listRounds(tableId),
+    enabled: Number.isFinite(tableId),
   })
 
-  useEffect(() => {
-    if (!id) return
-    loadGameData()
-  }, [id])
+  useTableRealtime(tableId)
+
+  const gameTable: GameTable | null = detailQuery.data?.table ?? null
+  const players: Player[] = useMemo(() => detailQuery.data?.players ?? [], [detailQuery.data])
+  const rounds: Round[] = useMemo(() => roundsQuery.data?.rounds ?? [], [roundsQuery.data])
+  const roundScores: RoundScore[] = useMemo(
+    () => roundsQuery.data?.scores ?? [],
+    [roundsQuery.data],
+  )
+  const loading = detailQuery.isPending || roundsQuery.isPending
+  const error = detailQuery.error ?? roundsQuery.error
+
+  const refreshRounds = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: schafkopfKeys.rounds(tableId) }),
+    [queryClient, tableId],
+  )
+  const refreshTable = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: schafkopfKeys.table(tableId) }),
+    [queryClient, tableId],
+  )
 
   // Scroll to bottom when rounds change
   useEffect(() => {
@@ -321,105 +252,59 @@ export function GameDetailsPage() {
   }
 
   const handleScoreUpdate = async (roundId: number, playerId: number, newScore: number) => {
-    // Optimistic update could go here
-
-    const { error } = await supabase.from('round_scores').upsert({
-      round_id: roundId,
-      player_id: playerId,
-      raw_score: newScore,
-    })
-
-    if (error) {
-      console.error('Error updating score:', error)
-      return
+    try {
+      await upsertScore(roundId, playerId, newScore)
+      // Previously this refetched every score on the table after each keystroke.
+      // Invalidating lets the cache decide, and realtime already covers the
+      // other devices.
+      await refreshRounds()
+    } catch (err) {
+      console.error('Error updating score:', err)
     }
-
-    // Refresh data (lightweight)
-    const { data } = await supabase
-      .from('round_scores')
-      .select('*')
-      .in(
-        'round_id',
-        rounds.map((r) => r.id),
-      )
-
-    if (data) setRoundScores(data)
   }
 
   const handleAddRound = async () => {
-    const newRoundNumber = rounds.length + 1
-    const { data: newRound, error } = await supabase
-      .from('Rounds')
-      .insert([{ table_id: tableId, round_number: newRoundNumber }])
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error adding round:', error)
-      return
+    try {
+      const newRound = await addRound({
+        tableId,
+        roundNumber: rounds.length + 1,
+        playerIds: players.map((p) => p.id),
+      })
+      await refreshRounds()
+      setExpandedRoundId(newRound.id)
+    } catch (err) {
+      console.error('Error adding round:', err)
     }
-
-    // Initialize 0 scores
-    const initialScores = players.map((p) => ({
-      round_id: newRound.id,
-      player_id: p.id,
-      raw_score: 0,
-    }))
-
-    await supabase.from('round_scores').insert(initialScores)
-
-    setRounds((prev) => [...prev, newRound])
-    setRoundScores((prev) => [
-      ...prev,
-      ...initialScores.map((s) => ({ ...s, created_at: new Date().toISOString() })),
-    ])
-    setExpandedRoundId(newRound.id)
   }
 
   const handleToggleIsOpen = async () => {
     if (!gameTable) return
-    const newValue = !gameTable.is_open
-    const { error } = await supabase.from('Tables').update({ is_open: newValue }).eq('id', tableId)
-
-    if (error) {
-      console.error('Error toggling is_open:', error)
-      return
+    try {
+      await setTableFlags(tableId, { is_open: !gameTable.is_open })
+      await refreshTable()
+    } catch (err) {
+      console.error('Error toggling is_open:', err)
     }
-
-    setGameTable((prev) => (prev ? { ...prev, is_open: newValue } : null))
   }
 
   const handleToggleExcludeFromOverall = async () => {
     if (!gameTable) return
-    const newValue = !gameTable.exclude_from_overall
-    const { error } = await supabase
-      .from('Tables')
-      .update({ exclude_from_overall: newValue })
-      .eq('id', tableId)
-
-    if (error) {
-      console.error('Error toggling exclude_from_overall:', error)
-      return
+    try {
+      await setTableFlags(tableId, { exclude_from_overall: !gameTable.exclude_from_overall })
+      await refreshTable()
+    } catch (err) {
+      console.error('Error toggling exclude_from_overall:', err)
     }
-
-    setGameTable((prev) => (prev ? { ...prev, exclude_from_overall: newValue } : null))
   }
 
   const handleAddPlayerToGame = async (playerId: number) => {
     try {
-      await supabase.from('table_players').insert([{ table_id: tableId, player_id: playerId }])
-
-      const scores = rounds.map((r) => ({
-        round_id: r.id,
-        player_id: playerId,
-        raw_score: 0,
-      }))
-
-      if (scores.length) {
-        await supabase.from('round_scores').insert(scores)
-      }
-
-      await loadGameData()
+      await addPlayerToTable(
+        tableId,
+        playerId,
+        rounds.map((r) => r.id),
+      )
+      await Promise.all([refreshTable(), refreshRounds()])
       setIsAddingPlayer(false)
       setSearchTerm('')
     } catch (err) {
@@ -430,12 +315,8 @@ export function GameDetailsPage() {
   const searchPlayers = async (search: string) => {
     setSearchLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('Players')
-        .select('*')
-        .ilike('name', `%${search}%`)
-      if (error) throw error
-      setAvailablePlayers((data || []).filter((p) => !players.find((x) => x.id === p.id)))
+      const found = await searchPlayersApi(search)
+      setAvailablePlayers(found.filter((p) => !players.find((x) => x.id === p.id)))
     } catch (e) {
       console.error('Error searching players:', e)
     } finally {
@@ -453,7 +334,7 @@ export function GameDetailsPage() {
   if (error)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 text-red-500">
-        Error: {error}
+        Error: {error instanceof Error ? error.message : 'Failed to load the game'}
       </div>
     )
 

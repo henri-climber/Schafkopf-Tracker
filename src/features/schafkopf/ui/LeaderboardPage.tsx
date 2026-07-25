@@ -1,13 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { supabase } from '@/shared/supabase/client'
 import { ScoreHistoryChart } from '@/features/schafkopf/ui/ScoreHistoryChart'
 import '@/shared/styles/leaderboard.css'
 import type { Player as PlayerRow } from '@/shared/supabase/types'
 import {
   accumulateLeaderboard,
   computeTableResults,
-  type TableWithScores,
+  cumulativeSeries,
 } from '@/features/schafkopf/domain/scoring'
 import {
   currentSemester,
@@ -15,6 +14,8 @@ import {
   SEMESTERS,
   semesterById,
 } from '@/features/schafkopf/domain/semesters'
+import { useTablesWithScores } from '@/features/schafkopf/api/queries'
+import { useCreatePlayer, usePlayers } from '@/features/players/api/queries'
 
 /** A player row plus the standings the leaderboard computes for it. */
 interface Player extends PlayerRow {
@@ -24,112 +25,56 @@ interface Player extends PlayerRow {
 
 export function LeaderboardPage() {
   const navigate = useNavigate()
-  const [players, setPlayers] = useState<Player[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [isAddingPlayer, setIsAddingPlayer] = useState(false)
   const [newPlayerName, setNewPlayerName] = useState('')
   const [includeOngoing, setIncludeOngoing] = useState(false)
   const [selectedSemesterId, setSelectedSemesterId] = useState<string>(() => currentSemester().id)
   const selectedSemester = semesterById(selectedSemesterId) ?? currentSemester()
 
-  useEffect(() => {
-    loadLeaderboard()
-  }, [includeOngoing, selectedSemesterId])
+  const playersQuery = usePlayers()
+  const createPlayer = useCreatePlayer()
+  const tablesQuery = useTablesWithScores(
+    { from: selectedSemester.startDate, to: selectedSemester.endDate },
+    { includeOngoing },
+  )
 
-  async function loadLeaderboard() {
-    setLoading(true)
-    setError(null)
-    try {
-      // 1. First, get all players
-      const { data: playersData, error: playersError } = await supabase.from('Players').select('*')
+  const loading = playersQuery.isPending || tablesQuery.isPending
+  const error = playersQuery.error ?? tablesQuery.error
 
-      if (playersError) throw playersError
+  // One fetch, computed once, feeding both the table and the chart below it.
+  const { players, series } = useMemo(() => {
+    const results = computeTableResults(tablesQuery.data ?? [])
+    const standings = accumulateLeaderboard(results)
+    const offsets = offsetsFor(selectedSemester.id)
 
-      // 2. Get all tables that aren't excluded
-      let query = supabase
-        .from('Tables')
-        .select('id, created_at')
-        .eq('exclude_from_overall', false)
-        .gte('created_at', selectedSemester.startDate)
-        .lte('created_at', selectedSemester.endDate)
-
-      // Only add is_open filter if we're not including ongoing games
-      if (!includeOngoing) {
-        query = query.eq('is_open', false)
-      }
-
-      const { data: tablesData, error: tablesError } = await query
-
-      if (tablesError) throw tablesError
-
-      // 3. For each table, gather its scores. Still one round-trip pair per
-      //    table — collapsing that is the next commit's job.
-      const tables: TableWithScores[] = []
-      for (const table of tablesData) {
-        const { data: roundsData, error: roundsError } = await supabase
-          .from('Rounds')
-          .select('id')
-          .eq('table_id', table.id)
-
-        if (roundsError) throw roundsError
-        if (!roundsData?.length) continue // Skip if no rounds found
-
-        const roundIds = roundsData.map((r) => r.id)
-
-        const { data: scoresData, error: scoresError } = await supabase
-          .from('round_scores')
-          .select('player_id, raw_score')
-          .in('round_id', roundIds)
-
-        if (scoresError) throw scoresError
-        tables.push({ id: table.id, created_at: table.created_at, scores: scoresData })
-      }
-
-      // 4. Rules live in the domain module; this component only presents them.
-      const standings = accumulateLeaderboard(computeTableResults(tables))
-      const offsets = offsetsFor(selectedSemester.id)
-
-      const sortedPlayers = playersData
-        .map((player) => {
-          const entry = standings.get(player.id)
-          return {
-            ...player,
-            totalScore: (entry?.totalPoints ?? 0) + (offsets[player.id] ?? 0),
-            gamesPlayed: entry?.gamesPlayed ?? 0,
-          }
-        })
-        .filter((player) => player.gamesPlayed > 0)
-        .sort(
-          (a, b) =>
-            b.totalScore - a.totalScore ||
-            b.gamesPlayed - a.gamesPlayed ||
-            a.name.localeCompare(b.name),
-        )
-
-      setPlayers(sortedPlayers)
-    } catch (err) {
-      console.error('Error loading leaderboard:', err)
-      setError(
-        err instanceof Error ? err.message : 'An error occurred while loading the leaderboard',
+    const ranked: Player[] = (playersQuery.data ?? [])
+      .map((player) => {
+        const entry = standings.get(player.id)
+        return {
+          ...player,
+          totalScore: (entry?.totalPoints ?? 0) + (offsets[player.id] ?? 0),
+          gamesPlayed: entry?.gamesPlayed ?? 0,
+        }
+      })
+      .filter((player) => player.gamesPlayed > 0)
+      .sort(
+        (a, b) =>
+          b.totalScore - a.totalScore ||
+          b.gamesPlayed - a.gamesPlayed ||
+          a.name.localeCompare(b.name),
       )
-    } finally {
-      setLoading(false)
-    }
-  }
+
+    return { players: ranked, series: cumulativeSeries(results) }
+  }, [playersQuery.data, tablesQuery.data, selectedSemester.id])
 
   async function handleAddPlayer(e: React.FormEvent) {
     e.preventDefault()
     if (!newPlayerName.trim()) return
 
     try {
-      const { error } = await supabase.from('Players').insert([{ name: newPlayerName.trim() }])
-
-      if (error) throw error
-
+      await createPlayer.mutateAsync(newPlayerName)
       setNewPlayerName('')
       setIsAddingPlayer(false)
-      loadLeaderboard() // Reload the leaderboard to include the new player
     } catch (error) {
       console.error('Error adding player:', error)
     }
@@ -142,7 +87,12 @@ export function LeaderboardPage() {
       </div>
     )
 
-  if (error) return <div className="error-container">Error: {error}</div>
+  if (error)
+    return (
+      <div className="error-container">
+        Error: {error instanceof Error ? error.message : 'Failed to load the leaderboard'}
+      </div>
+    )
 
   const top3 = players.slice(0, 3)
 
@@ -464,10 +414,7 @@ export function LeaderboardPage() {
         {/* Chart Section */}
         <div className="chart-container">
           <h3 className="chart-title">Performance History</h3>
-          <ScoreHistoryChart
-            startDate={selectedSemester.startDate}
-            endDate={selectedSemester.endDate}
-          />
+          <ScoreHistoryChart series={series} players={playersQuery.data ?? []} />
         </div>
       </div>
     </div>

@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router'
-import { useState, useEffect } from 'react'
-import { supabase } from '@/shared/supabase/client'
+import { useState, useEffect, useMemo } from 'react'
 import {
   TrophyIcon,
   PlusIcon,
@@ -15,83 +14,46 @@ import {
 } from '@heroicons/react/24/outline'
 import { SportToggle } from '@/shared/sport-mode/SportToggle'
 import '@/shared/styles/home.css'
-import type { GameTable, Player as PlayerRow } from '@/shared/supabase/types'
+import type { Player as PlayerRow } from '@/shared/supabase/types'
+import { useCreateTable, useTables } from '@/features/schafkopf/api/queries'
+import { useCreatePlayer, usePlayers } from '@/features/players/api/queries'
 
 /** Only the columns the player list actually selects. */
 type Player = Pick<PlayerRow, 'id' | 'name'>
-
-interface TablePlayer {
-  player_id: number
-  player: Player
-}
-
-/** A table plus its nested players, as returned by the embedded select. */
-interface Table extends GameTable {
-  table_players?: TablePlayer[]
-}
 
 export function HomePage() {
   const navigate = useNavigate()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [tableName, setTableName] = useState('')
-  const [activeTables, setActiveTables] = useState<Table[]>([])
-  const [loading, setLoading] = useState(true)
-  const [players, setPlayers] = useState<Player[]>([])
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<number[]>([])
-  const [loadingPlayers, setLoadingPlayers] = useState(false)
   const [showAddPlayerInput, setShowAddPlayerInput] = useState(false)
   const [newPlayerName, setNewPlayerName] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedFilterIds, setSelectedFilterIds] = useState<number[]>([])
+
+  const { data: activeTablesData, isPending: loading } = useTables({ isOpen: true })
+  const activeTables = activeTablesData ?? []
+
+  const playersQuery = usePlayers()
+  const loadingPlayers = playersQuery.isPending
+  const players: Player[] = useMemo(
+    () => [...(playersQuery.data ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
+    [playersQuery.data],
+  )
+  const createPlayer = useCreatePlayer()
+  const createTableMutation = useCreateTable()
 
   const filteredPlayers = players.filter((player) =>
     player.name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   useEffect(() => {
-    loadActiveTables()
-  }, [])
-
-  useEffect(() => {
-    if (isDialogOpen) {
-      loadPlayers()
-    } else {
+    if (!isDialogOpen) {
       setSearchTerm('')
       setShowAddPlayerInput(false)
       setNewPlayerName('')
     }
   }, [isDialogOpen])
-
-  async function loadActiveTables() {
-    try {
-      const { data, error } = await supabase
-        .from('Tables')
-        .select('*, table_players(player_id, player:Players(id, name))')
-        .eq('is_open', true)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setActiveTables(data || [])
-    } catch (error) {
-      console.error('Error loading active tables:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function loadPlayers() {
-    setLoadingPlayers(true)
-    try {
-      const { data, error } = await supabase.from('Players').select('id, name').order('name')
-
-      if (error) throw error
-      setPlayers(data || [])
-    } catch (error) {
-      console.error('Error loading players:', error)
-    } finally {
-      setLoadingPlayers(false)
-    }
-  }
 
   function toggleFilterPlayer(id: number) {
     setSelectedFilterIds((prev) =>
@@ -110,16 +72,8 @@ export function HomePage() {
     if (!newPlayerName.trim()) return
 
     try {
-      const { data, error } = await supabase
-        .from('Players')
-        .insert([{ name: newPlayerName.trim() }])
-        .select()
-        .single()
-
-      if (error) throw error
-
-      setPlayers((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
-      setSelectedPlayerIds((prev) => [...prev, data.id])
+      const player = await createPlayer.mutateAsync(newPlayerName)
+      setSelectedPlayerIds((prev) => [...prev, player.id])
       setNewPlayerName('')
       setShowAddPlayerInput(false)
     } catch (error) {
@@ -132,39 +86,16 @@ export function HomePage() {
     if (!tableName.trim()) return
 
     try {
-      const { data: newTable, error } = await supabase
-        .from('Tables')
-        .insert([
-          {
-            name: tableName.trim(),
-            is_open: true,
-            exclude_from_overall: false,
-          },
-        ])
-        .select()
-        .single()
-
-      if (error) throw error
-
-      if (selectedPlayerIds.length > 0 && newTable) {
-        const { error: playersError } = await supabase.from('table_players').insert(
-          selectedPlayerIds.map((playerId) => ({
-            table_id: newTable.id,
-            player_id: playerId,
-          })),
-        )
-
-        if (playersError) throw playersError
-      }
+      const newTable = await createTableMutation.mutateAsync({
+        name: tableName.trim(),
+        playerIds: selectedPlayerIds,
+      })
 
       setTableName('')
       setSelectedPlayerIds([])
       setIsDialogOpen(false)
-      loadActiveTables()
 
-      if (newTable) {
-        navigate(`/game-details/${newTable.id}`)
-      }
+      navigate(`/game-details/${newTable.id}`)
     } catch (error) {
       console.error('Error creating table:', error)
       alert('Failed to create table')

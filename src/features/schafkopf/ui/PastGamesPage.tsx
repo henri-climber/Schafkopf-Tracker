@@ -1,49 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { supabase } from '@/shared/supabase/client'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import '@/shared/styles/past-games.css'
-import type { GameTable, Player as PlayerRow } from '@/shared/supabase/types'
+import type { Player as PlayerRow } from '@/shared/supabase/types'
+import { useTables } from '@/features/schafkopf/api/queries'
 
-/** Only the columns the player list actually selects. */
 type Player = Pick<PlayerRow, 'id' | 'name'>
-
-interface TablePlayer {
-  player_id: number
-  player: Player
-}
-
-/** A table plus its nested players, as returned by the embedded select. */
-interface Table extends GameTable {
-  table_players?: TablePlayer[]
-}
 
 export function PastGamesPage() {
   const navigate = useNavigate()
-  const [pastGames, setPastGames] = useState<Table[]>([])
-  const [loading, setLoading] = useState(true)
   const [selectedFilterIds, setSelectedFilterIds] = useState<number[]>([])
 
-  useEffect(() => {
-    loadPastGames()
-  }, [])
-
-  async function loadPastGames() {
-    try {
-      const { data, error } = await supabase
-        .from('Tables')
-        .select('*, table_players(player_id, player:Players(id, name))')
-        .eq('is_open', false)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setPastGames(data || [])
-    } catch (error) {
-      console.error('Error loading past games:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: pastGamesData, isPending: loading } = useTables({ isOpen: false })
+  const pastGames = pastGamesData ?? []
 
   function toggleFilterPlayer(id: number) {
     setSelectedFilterIds((prev) =>
