@@ -11,7 +11,7 @@ import {
   MagnifyingGlassIcon,
   ClockIcon,
   ArrowRightIcon,
-  TableCellsIcon
+  TableCellsIcon,
 } from '@heroicons/react/24/outline'
 import { useSportMode } from '../context/SportModeContext'
 import { SportToggle } from '../components/SportToggle'
@@ -57,8 +57,8 @@ function SchafkopfHome() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedFilterIds, setSelectedFilterIds] = useState<number[]>([])
 
-  const filteredPlayers = players.filter(player =>
-    player.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPlayers = players.filter((player) =>
+    player.name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   useEffect(() => {
@@ -95,10 +95,7 @@ function SchafkopfHome() {
   async function loadPlayers() {
     setLoadingPlayers(true)
     try {
-      const { data, error } = await supabase
-        .from('Players')
-        .select('id, name')
-        .order('name')
+      const { data, error } = await supabase.from('Players').select('id, name').order('name')
 
       if (error) throw error
       setPlayers(data || [])
@@ -110,16 +107,14 @@ function SchafkopfHome() {
   }
 
   function toggleFilterPlayer(id: number) {
-    setSelectedFilterIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    setSelectedFilterIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     )
   }
 
   function togglePlayerSelection(playerId: number) {
-    setSelectedPlayerIds(prev =>
-      prev.includes(playerId)
-        ? prev.filter(id => id !== playerId)
-        : [...prev, playerId]
+    setSelectedPlayerIds((prev) =>
+      prev.includes(playerId) ? prev.filter((id) => id !== playerId) : [...prev, playerId],
     )
   }
 
@@ -136,8 +131,8 @@ function SchafkopfHome() {
 
       if (error) throw error
 
-      setPlayers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
-      setSelectedPlayerIds(prev => [...prev, data.id])
+      setPlayers((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+      setSelectedPlayerIds((prev) => [...prev, data.id])
       setNewPlayerName('')
       setShowAddPlayerInput(false)
     } catch (error) {
@@ -152,23 +147,25 @@ function SchafkopfHome() {
     try {
       const { data: newTable, error } = await supabase
         .from('Tables')
-        .insert([{
-          name: tableName.trim(),
-          is_open: true,
-          exclude_from_overall: false
-        }])
+        .insert([
+          {
+            name: tableName.trim(),
+            is_open: true,
+            exclude_from_overall: false,
+          },
+        ])
         .select()
         .single()
 
       if (error) throw error
 
       if (selectedPlayerIds.length > 0 && newTable) {
-        const { error: playersError } = await supabase
-          .from('table_players')
-          .insert(selectedPlayerIds.map(playerId => ({
+        const { error: playersError } = await supabase.from('table_players').insert(
+          selectedPlayerIds.map((playerId) => ({
             table_id: newTable.id,
-            player_id: playerId
-          })))
+            player_id: playerId,
+          })),
+        )
 
         if (playersError) throw playersError
       }
@@ -192,18 +189,13 @@ function SchafkopfHome() {
       {/* Header */}
       <header className="home-header">
         <SportToggle />
-        <h1 className="home-title">
-          Schafkopf Tracker
-        </h1>
+        <h1 className="home-title">Schafkopf Tracker</h1>
         <p className="home-subtitle">Track your games and scores</p>
       </header>
 
       {/* Main Actions */}
       <div className="main-actions">
-        <div
-          onClick={() => setIsDialogOpen(true)}
-          className="action-card action-card-green"
-        >
+        <div onClick={() => setIsDialogOpen(true)} className="action-card action-card-green">
           <div className="action-card-icon-wrapper">
             <PlusIcon className="w-6 h-6 text-white" />
           </div>
@@ -213,10 +205,7 @@ function SchafkopfHome() {
           </div>
         </div>
 
-        <div
-          onClick={() => navigate('/leaderboard')}
-          className="action-card action-card-blue"
-        >
+        <div onClick={() => navigate('/leaderboard')} className="action-card action-card-blue">
           <div className="action-card-icon-wrapper">
             <TrophyIcon className="w-6 h-6 text-white" />
           </div>
@@ -250,7 +239,7 @@ function SchafkopfHome() {
           filterPlayers.sort((a, b) => a.name.localeCompare(b.name))
           return filterPlayers.length > 0 ? (
             <div className="player-filter-bar">
-              {filterPlayers.map(player => (
+              {filterPlayers.map((player) => (
                 <button
                   key={player.id}
                   onClick={() => toggleFilterPlayer(player.id)}
@@ -269,13 +258,14 @@ function SchafkopfHome() {
         })()}
 
         {(() => {
-          const displayedTables = selectedFilterIds.length === 0
-            ? activeTables
-            : activeTables.filter(table =>
-                selectedFilterIds.every(id =>
-                  table.table_players?.some(tp => tp.player_id === id)
+          const displayedTables =
+            selectedFilterIds.length === 0
+              ? activeTables
+              : activeTables.filter((table) =>
+                  selectedFilterIds.every((id) =>
+                    table.table_players?.some((tp) => tp.player_id === id),
+                  ),
                 )
-              )
 
           if (loading) {
             return (
@@ -289,10 +279,7 @@ function SchafkopfHome() {
               <div className="empty-state">
                 <TableCellsIcon className="empty-state-icon" />
                 <p className="empty-state-text">No active games found</p>
-                <button
-                  onClick={() => setIsDialogOpen(true)}
-                  className="empty-state-action"
-                >
+                <button onClick={() => setIsDialogOpen(true)} className="empty-state-action">
                   Start a new game
                 </button>
               </div>
@@ -303,51 +290,45 @@ function SchafkopfHome() {
               <div className="empty-state">
                 <TableCellsIcon className="empty-state-icon" />
                 <p className="empty-state-text">Keine Spiele mit diesen Spielern</p>
-                <button
-                  onClick={() => setSelectedFilterIds([])}
-                  className="empty-state-action"
-                >
+                <button onClick={() => setSelectedFilterIds([])} className="empty-state-action">
                   Filter zurücksetzen
                 </button>
               </div>
             )
           }
           return (
-          <div className="active-games-grid">
-            {displayedTables.map((table) => (
-              <div
-                key={table.id}
-                onClick={() => navigate(`/game-details/${table.id}`)}
-                className="game-card group"
-              >
-                <div>
-                  <div className="game-card-header">
-                    <span className="game-card-badge">Active</span>
+            <div className="active-games-grid">
+              {displayedTables.map((table) => (
+                <div
+                  key={table.id}
+                  onClick={() => navigate(`/game-details/${table.id}`)}
+                  className="game-card group"
+                >
+                  <div>
+                    <div className="game-card-header">
+                      <span className="game-card-badge">Active</span>
+                    </div>
+                    <div className="game-card-title">{table.name}</div>
                   </div>
-                  <div className="game-card-title">{table.name}</div>
-                </div>
 
-                <div className="game-card-footer">
-                  <div className="game-card-date">
-                    <CalendarIcon className="w-4 h-4" />
-                    {new Date(table.created_at).toLocaleDateString()}
-                  </div>
-                  <div className="game-card-arrow">
-                    <ArrowRightIcon className="w-4 h-4" />
+                  <div className="game-card-footer">
+                    <div className="game-card-date">
+                      <CalendarIcon className="w-4 h-4" />
+                      {new Date(table.created_at).toLocaleDateString()}
+                    </div>
+                    <div className="game-card-arrow">
+                      <ArrowRightIcon className="w-4 h-4" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
           )
         })()}
       </div>
 
       {/* Past Games Floating Button */}
-      <button
-        onClick={() => navigate('/past-games')}
-        className="past-games-button"
-      >
+      <button onClick={() => navigate('/past-games')} className="past-games-button">
         <ClockIcon className="w-5 h-5" />
         <span>Past Games</span>
       </button>
@@ -358,10 +339,7 @@ function SchafkopfHome() {
           <div className="dialog-content animate-in fade-in zoom-in-95 duration-200">
             <div className="dialog-header">
               <h2 className="dialog-title">Start New Game</h2>
-              <button
-                onClick={() => setIsDialogOpen(false)}
-                className="dialog-close"
-              >
+              <button onClick={() => setIsDialogOpen(false)} className="dialog-close">
                 <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
@@ -369,9 +347,7 @@ function SchafkopfHome() {
             <form onSubmit={handleCreateTable} className="dialog-form">
               <div className="dialog-body">
                 <div className="form-field">
-                  <label className="form-label">
-                    Game Name
-                  </label>
+                  <label className="form-label">Game Name</label>
                   <input
                     type="text"
                     value={tableName}
@@ -388,9 +364,7 @@ function SchafkopfHome() {
                       <UserGroupIcon className="w-4 h-4" />
                       Select Players
                     </label>
-                    <span className="player-count-badge">
-                      {selectedPlayerIds.length} selected
-                    </span>
+                    <span className="player-count-badge">{selectedPlayerIds.length} selected</span>
                   </div>
 
                   <div className="player-search-container">
@@ -407,7 +381,9 @@ function SchafkopfHome() {
 
                     <div className="player-list custom-scrollbar">
                       {loadingPlayers ? (
-                        <div className="text-center py-8 text-gray-400 text-sm">Loading players...</div>
+                        <div className="text-center py-8 text-gray-400 text-sm">
+                          Loading players...
+                        </div>
                       ) : filteredPlayers.length === 0 ? (
                         <div className="text-center py-8 text-gray-400 text-sm">
                           <p>No players found</p>
@@ -419,13 +395,25 @@ function SchafkopfHome() {
                             onClick={() => togglePlayerSelection(player.id)}
                             className={`player-item ${selectedPlayerIds.includes(player.id) ? 'selected' : ''}`}
                           >
-                            <div className={`w-5 h-5 rounded-md border flex items-center justify-center mr-3 transition-colors ${selectedPlayerIds.includes(player.id)
-                              ? 'bg-blue-600 border-blue-600'
-                              : 'border-gray-300 bg-white'
-                              }`}>
+                            <div
+                              className={`w-5 h-5 rounded-md border flex items-center justify-center mr-3 transition-colors ${
+                                selectedPlayerIds.includes(player.id)
+                                  ? 'bg-blue-600 border-blue-600'
+                                  : 'border-gray-300 bg-white'
+                              }`}
+                            >
                               {selectedPlayerIds.includes(player.id) && (
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-white">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                  className="w-3.5 h-3.5 text-white"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                  />
                                 </svg>
                               )}
                             </div>
@@ -484,18 +472,10 @@ function SchafkopfHome() {
               </div>
 
               <div className="dialog-footer">
-                <button
-                  type="button"
-                  onClick={() => setIsDialogOpen(false)}
-                  className="btn-cancel"
-                >
+                <button type="button" onClick={() => setIsDialogOpen(false)} className="btn-cancel">
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={!tableName.trim()}
-                  className="btn-create"
-                >
+                <button type="submit" disabled={!tableName.trim()} className="btn-create">
                   Create Game
                 </button>
               </div>

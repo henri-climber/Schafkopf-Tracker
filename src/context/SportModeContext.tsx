@@ -26,7 +26,7 @@ export function SportModeProvider({ children }: { children: ReactNode }) {
   }, [mode])
 
   const setMode = (next: SportMode) => setModeState(next)
-  const toggleMode = () => setModeState(prev => (prev === 'tt' ? 'schafkopf' : 'tt'))
+  const toggleMode = () => setModeState((prev) => (prev === 'tt' ? 'schafkopf' : 'tt'))
 
   return (
     <SportModeContext.Provider value={{ mode, setMode, toggleMode }}>

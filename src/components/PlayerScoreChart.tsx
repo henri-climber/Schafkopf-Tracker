@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts'
 import { supabase } from '../lib/supabase'
 import './PlayerScoreChart.css'
 
@@ -51,7 +60,7 @@ function formatTimestamp(timestamp: string) {
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   }).format(date)
 }
 
@@ -59,7 +68,7 @@ function formatDate(timestamp: string) {
   const date = new Date(timestamp)
   return new Intl.DateTimeFormat('de-DE', {
     day: '2-digit',
-    month: '2-digit'
+    month: '2-digit',
   }).format(date)
 }
 
@@ -89,9 +98,7 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
   async function loadChartData() {
     try {
       // 1. Get all players
-      const { data: playersData, error: playersError } = await supabase
-        .from('Players')
-        .select('*')
+      const { data: playersData, error: playersError } = await supabase.from('Players').select('*')
 
       if (playersError) throw playersError
 
@@ -100,7 +107,7 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
         id: player.id,
         name: player.name,
         color: COLORS[index % COLORS.length],
-        scores: []
+        scores: [],
       }))
 
       // 2. Get all tables with their creation dates
@@ -133,7 +140,7 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
         if (roundsError) throw roundsError
         if (!roundsData?.length) continue
 
-        const roundIds = roundsData.map(r => r.id)
+        const roundIds = roundsData.map((r) => r.id)
 
         // Get scores for these rounds
         const { data: scoresData, error: scoresError } = await supabase
@@ -144,17 +151,20 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
         if (scoresError) throw scoresError
 
         // Calculate scores for this table
-        const tableScores = scoresData.reduce((acc, score) => {
-          if (!acc[score.player_id]) acc[score.player_id] = 0
-          acc[score.player_id] += score.raw_score
-          return acc
-        }, {} as Record<number, number>)
+        const tableScores = scoresData.reduce(
+          (acc, score) => {
+            if (!acc[score.player_id]) acc[score.player_id] = 0
+            acc[score.player_id] += score.raw_score
+            return acc
+          },
+          {} as Record<number, number>,
+        )
 
         // Sort players by score and assign points
         const sortedPlayers = Object.entries(tableScores)
           .map(([playerId, score]) => ({
             playerId: parseInt(playerId),
-            score
+            score,
           }))
           .sort((a, b) => b.score - a.score)
 
@@ -162,14 +172,16 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
 
         // Update running totals for each player
         sortedPlayers.forEach((player, index) => {
-          const playerIndex = playerScores.findIndex(p => p.id === player.playerId)
+          const playerIndex = playerScores.findIndex((p) => p.id === player.playerId)
           if (playerIndex !== -1) {
-            const currentScore = playerScores[playerIndex].scores
-              .reduce((total: number, entry: ScoreEntry) => total + entry.score, 0)
+            const currentScore = playerScores[playerIndex].scores.reduce(
+              (total: number, entry: ScoreEntry) => total + entry.score,
+              0,
+            )
 
             const newScore: ScoreEntry = {
               timestamp,
-              score: points[index] || 0
+              score: points[index] || 0,
             }
 
             playerScores[playerIndex].scores.push(newScore)
@@ -188,7 +200,7 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
       const chartData = Array.from(timestampScores.entries())
         .map(([timestamp, scores]) => ({
           timestamp,
-          ...scores
+          ...scores,
         }))
         .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
 
@@ -196,7 +208,9 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
       setChartData(chartData)
     } catch (err) {
       console.error('Error loading chart data:', err)
-      setError(err instanceof Error ? err.message : 'An error occurred while loading the chart data')
+      setError(
+        err instanceof Error ? err.message : 'An error occurred while loading the chart data',
+      )
     } finally {
       setLoading(false)
     }
@@ -222,17 +236,10 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
 
   return (
     <div className="chart-container">
-<div className="chart-wrapper">
+      <div className="chart-wrapper">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={chartData}
-            margin={{ top: 5, right: 10, left: 0, bottom: 25 }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="#e5e7eb"
-              strokeWidth={1}
-            />
+          <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 25 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" strokeWidth={1} />
             <XAxis
               dataKey="timestamp"
               tickFormatter={isMobile ? formatDate : formatTimestamp}
@@ -257,30 +264,32 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
                 border: '1px solid #e5e7eb',
                 borderRadius: '0.375rem',
                 fontSize: '14px',
-                padding: '8px 12px'
+                padding: '8px 12px',
               }}
             />
             <Legend
               wrapperStyle={{
-                paddingTop: '10px'
+                paddingTop: '10px',
               }}
               iconType="circle"
             />
-            {players.filter(player => player.scores.length > 0).map((player) => (
-              <Line
-                key={player.id}
-                type="linear"
-                dataKey={player.name}
-                stroke={player.color}
-                strokeWidth={2}
-                dot={{ fill: player.color, r: 4, strokeWidth: 1, stroke: 'white' }}
-                activeDot={{ r: 6, strokeWidth: 2, stroke: 'white' }}
-                connectNulls
-              />
-            ))}
+            {players
+              .filter((player) => player.scores.length > 0)
+              .map((player) => (
+                <Line
+                  key={player.id}
+                  type="linear"
+                  dataKey={player.name}
+                  stroke={player.color}
+                  strokeWidth={2}
+                  dot={{ fill: player.color, r: 4, strokeWidth: 1, stroke: 'white' }}
+                  activeDot={{ r: 6, strokeWidth: 2, stroke: 'white' }}
+                  connectNulls
+                />
+              ))}
           </LineChart>
         </ResponsiveContainer>
       </div>
     </div>
   )
-} 
+}

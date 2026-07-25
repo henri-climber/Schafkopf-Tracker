@@ -32,7 +32,7 @@ export function setsNeeded(bestOf: number): number {
 /** Gewinnerseite, sobald genug Saetze gewonnen wurden — sonst null. */
 export function matchWinner(
   sets: Pick<TTSet, 'score_a' | 'score_b'>[],
-  bestOf: number
+  bestOf: number,
 ): TTSide | null {
   const { a, b } = setsWon(sets)
   const needed = setsNeeded(bestOf)

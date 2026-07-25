@@ -41,7 +41,9 @@ export function TTPastMatches() {
     try {
       const { data, error } = await supabase
         .from('tt_matches')
-        .select('id, name, created_at, format, best_of, exclude_from_overall, tt_match_players(player_id, side, player:Players(id, name)), tt_sets(score_a, score_b)')
+        .select(
+          'id, name, created_at, format, best_of, exclude_from_overall, tt_match_players(player_id, side, player:Players(id, name)), tt_sets(score_a, score_b)',
+        )
         .eq('is_open', false)
         .order('created_at', { ascending: false })
       if (error) throw error
@@ -54,10 +56,12 @@ export function TTPastMatches() {
   }
 
   function teamName(m: MatchRow, side: TTSide): string {
-    return m.tt_match_players
-      .filter(mp => mp.side === side)
-      .map(mp => mp.player?.name ?? `#${mp.player_id}`)
-      .join(' & ') || '—'
+    return (
+      m.tt_match_players
+        .filter((mp) => mp.side === side)
+        .map((mp) => mp.player?.name ?? `#${mp.player_id}`)
+        .join(' & ') || '—'
+    )
   }
 
   return (
@@ -76,7 +80,7 @@ export function TTPastMatches() {
           <div className="text-center text-gray-600">No past matches found</div>
         ) : (
           <div className="past-games-list">
-            {matches.map(m => {
+            {matches.map((m) => {
               const won = setsWon(m.tt_sets || [])
               const winner = matchWinner(m.tt_sets || [], m.best_of)
               return (
@@ -87,14 +91,25 @@ export function TTPastMatches() {
                 >
                   <div className="past-game-name">
                     {m.name ? `${m.name} — ` : ''}
-                    <span className={winner === 'A' ? 'text-blue-400 font-bold' : ''}>{teamName(m, 'A')}</span>
-                    {'  '}<span className="text-gray-400">{won.a}:{won.b}</span>{'  '}
-                    <span className={winner === 'B' ? 'text-emerald-400 font-bold' : ''}>{teamName(m, 'B')}</span>
+                    <span className={winner === 'A' ? 'text-blue-400 font-bold' : ''}>
+                      {teamName(m, 'A')}
+                    </span>
+                    {'  '}
+                    <span className="text-gray-400">
+                      {won.a}:{won.b}
+                    </span>
+                    {'  '}
+                    <span className={winner === 'B' ? 'text-emerald-400 font-bold' : ''}>
+                      {teamName(m, 'B')}
+                    </span>
                   </div>
                   <div className="past-game-date">
-                    {m.format === 'singles' ? 'Einzel' : 'Doppel'} · BO{m.best_of} · {new Date(m.created_at).toLocaleDateString()}
+                    {m.format === 'singles' ? 'Einzel' : 'Doppel'} · BO{m.best_of} ·{' '}
+                    {new Date(m.created_at).toLocaleDateString()}
                   </div>
-                  <div className={`past-game-badge ${m.exclude_from_overall ? 'past-game-badge-excluded' : 'past-game-badge-included'}`}>
+                  <div
+                    className={`past-game-badge ${m.exclude_from_overall ? 'past-game-badge-excluded' : 'past-game-badge-included'}`}
+                  >
                     {m.exclude_from_overall ? 'Excluded' : 'Included'}
                   </div>
                 </button>

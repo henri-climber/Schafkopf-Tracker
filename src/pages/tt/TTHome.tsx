@@ -60,8 +60,8 @@ export function TTHome() {
   const [creating, setCreating] = useState(false)
 
   const perSide = format === 'singles' ? 1 : 2
-  const filteredPlayers = players.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPlayers = players.filter((p) =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
   const canCreate = sideA.length === perSide && sideB.length === perSide
 
@@ -81,8 +81,8 @@ export function TTHome() {
 
   // Bei Format-Wechsel ueberzaehlige Spieler abschneiden
   useEffect(() => {
-    setSideA(prev => prev.slice(0, perSide))
-    setSideB(prev => prev.slice(0, perSide))
+    setSideA((prev) => prev.slice(0, perSide))
+    setSideB((prev) => prev.slice(0, perSide))
   }, [perSide])
 
   async function loadActiveMatches() {
@@ -105,10 +105,7 @@ export function TTHome() {
   async function loadPlayers() {
     setLoadingPlayers(true)
     try {
-      const { data, error } = await supabase
-        .from('Players')
-        .select('id, name')
-        .order('name')
+      const { data, error } = await supabase.from('Players').select('id, name').order('name')
 
       if (error) throw error
       setPlayers(data || [])
@@ -125,21 +122,21 @@ export function TTHome() {
 
     // Bereits zugeordnet -> entfernen (Toggle)
     if (inA) {
-      setSideA(prev => prev.filter(id => id !== playerId))
+      setSideA((prev) => prev.filter((id) => id !== playerId))
       return
     }
     if (inB) {
-      setSideB(prev => prev.filter(id => id !== playerId))
+      setSideB((prev) => prev.filter((id) => id !== playerId))
       return
     }
 
     // Dem aktiven Team hinzufuegen, solange Platz ist
     if (activeTarget === 'A') {
       if (sideA.length >= perSide) return
-      setSideA(prev => [...prev, playerId])
+      setSideA((prev) => [...prev, playerId])
     } else {
       if (sideB.length >= perSide) return
-      setSideB(prev => [...prev, playerId])
+      setSideB((prev) => [...prev, playerId])
     }
   }
 
@@ -149,7 +146,7 @@ export function TTHome() {
     return null
   }
 
-  const playerName = (id: number) => players.find(p => p.id === id)?.name ?? `#${id}`
+  const playerName = (id: number) => players.find((p) => p.id === id)?.name ?? `#${id}`
 
   async function handleAddPlayer(e: React.FormEvent) {
     e.preventDefault()
@@ -164,7 +161,7 @@ export function TTHome() {
 
       if (error) throw error
 
-      setPlayers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+      setPlayers((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
       setNewPlayerName('')
       setShowAddPlayerInput(false)
     } catch (error) {
@@ -180,21 +177,23 @@ export function TTHome() {
     try {
       const { data: newMatch, error } = await supabase
         .from('tt_matches')
-        .insert([{
-          name: matchName.trim() || null,
-          format,
-          best_of: bestOf,
-          is_open: true,
-          exclude_from_overall: false,
-        }])
+        .insert([
+          {
+            name: matchName.trim() || null,
+            format,
+            best_of: bestOf,
+            is_open: true,
+            exclude_from_overall: false,
+          },
+        ])
         .select()
         .single()
 
       if (error) throw error
 
       const rows = [
-        ...sideA.map(player_id => ({ match_id: newMatch.id, player_id, side: 'A' as TTSide })),
-        ...sideB.map(player_id => ({ match_id: newMatch.id, player_id, side: 'B' as TTSide })),
+        ...sideA.map((player_id) => ({ match_id: newMatch.id, player_id, side: 'A' as TTSide })),
+        ...sideB.map((player_id) => ({ match_id: newMatch.id, player_id, side: 'B' as TTSide })),
       ]
       const { error: playersError } = await supabase.from('tt_match_players').insert(rows)
       if (playersError) throw playersError
@@ -214,10 +213,12 @@ export function TTHome() {
   }
 
   function sideNames(match: TTMatchRow, side: TTSide): string {
-    return (match.tt_match_players ?? [])
-      .filter(mp => mp.side === side)
-      .map(mp => mp.player?.name ?? `#${mp.player_id}`)
-      .join(' & ') || '—'
+    return (
+      (match.tt_match_players ?? [])
+        .filter((mp) => mp.side === side)
+        .map((mp) => mp.player?.name ?? `#${mp.player_id}`)
+        .join(' & ') || '—'
+    )
   }
 
   return (
@@ -275,7 +276,7 @@ export function TTHome() {
           </div>
         ) : (
           <div className="active-games-grid">
-            {activeMatches.map(match => (
+            {activeMatches.map((match) => (
               <div
                 key={match.id}
                 onClick={() => navigate(`/tt/match/${match.id}`)}
@@ -335,7 +336,7 @@ export function TTHome() {
                   <input
                     type="text"
                     value={matchName}
-                    onChange={e => setMatchName(e.target.value)}
+                    onChange={(e) => setMatchName(e.target.value)}
                     placeholder="e.g. Finale"
                     className="form-input"
                   />
@@ -363,13 +364,14 @@ export function TTHome() {
 
                 <div className="form-field">
                   <label className="form-label">
-                    Best of — erster auf {Math.floor(bestOf / 2) + 1} {Math.floor(bestOf / 2) + 1 === 1 ? 'Satz' : 'Sätze'}
+                    Best of — erster auf {Math.floor(bestOf / 2) + 1}{' '}
+                    {Math.floor(bestOf / 2) + 1 === 1 ? 'Satz' : 'Sätze'}
                   </label>
                   <div className="tt-stepper">
                     <button
                       type="button"
                       className="tt-stepper-btn"
-                      onClick={() => setBestOf(n => Math.max(1, n - 1))}
+                      onClick={() => setBestOf((n) => Math.max(1, n - 1))}
                       disabled={bestOf <= 1}
                       aria-label="Weniger Sätze"
                     >
@@ -380,20 +382,20 @@ export function TTHome() {
                       min={1}
                       className="tt-stepper-input"
                       value={bestOf}
-                      onChange={e => setBestOf(Math.max(1, parseInt(e.target.value) || 1))}
-                      onFocus={e => e.target.select()}
+                      onChange={(e) => setBestOf(Math.max(1, parseInt(e.target.value) || 1))}
+                      onFocus={(e) => e.target.select()}
                     />
                     <button
                       type="button"
                       className="tt-stepper-btn"
-                      onClick={() => setBestOf(n => n + 1)}
+                      onClick={() => setBestOf((n) => n + 1)}
                       aria-label="Mehr Sätze"
                     >
                       +
                     </button>
                   </div>
                   <div className="tt-presets">
-                    {BEST_OF_PRESETS.map(n => (
+                    {BEST_OF_PRESETS.map((n) => (
                       <button
                         key={n}
                         type="button"
@@ -416,7 +418,7 @@ export function TTHome() {
 
                   {/* Team-Boxen */}
                   <div className="tt-teams">
-                    {(['A', 'B'] as TTSide[]).map(side => {
+                    {(['A', 'B'] as TTSide[]).map((side) => {
                       const ids = side === 'A' ? sideA : sideB
                       return (
                         <div
@@ -426,18 +428,20 @@ export function TTHome() {
                         >
                           <div className="tt-team-title">
                             <span>Team {side}</span>
-                            {activeTarget === side && <span className="tt-team-target">Auswahl</span>}
+                            {activeTarget === side && (
+                              <span className="tt-team-target">Auswahl</span>
+                            )}
                           </div>
                           {ids.length === 0 ? (
                             <span className="tt-team-empty">Spieler wählen…</span>
                           ) : (
                             <div className="flex flex-wrap gap-1">
-                              {ids.map(id => (
+                              {ids.map((id) => (
                                 <span key={id} className="tt-chip">
                                   {playerName(id)}
                                   <span
                                     className="tt-chip-remove"
-                                    onClick={ev => {
+                                    onClick={(ev) => {
                                       ev.stopPropagation()
                                       assignPlayer(id)
                                     }}
@@ -460,20 +464,22 @@ export function TTHome() {
                         type="text"
                         placeholder="Search players..."
                         value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                         className="player-search-input pl-9"
                       />
                     </div>
 
                     <div className="player-list custom-scrollbar">
                       {loadingPlayers ? (
-                        <div className="text-center py-8 text-gray-400 text-sm">Loading players...</div>
+                        <div className="text-center py-8 text-gray-400 text-sm">
+                          Loading players...
+                        </div>
                       ) : filteredPlayers.length === 0 ? (
                         <div className="text-center py-8 text-gray-400 text-sm">
                           <p>No players found</p>
                         </div>
                       ) : (
-                        filteredPlayers.map(player => {
+                        filteredPlayers.map((player) => {
                           const side = sideOf(player.id)
                           return (
                             <div
@@ -486,8 +492,8 @@ export function TTHome() {
                                   side === 'A'
                                     ? 'bg-blue-600 border-blue-600 text-white'
                                     : side === 'B'
-                                    ? 'bg-emerald-600 border-emerald-600 text-white'
-                                    : 'border-gray-300 bg-white text-transparent'
+                                      ? 'bg-emerald-600 border-emerald-600 text-white'
+                                      : 'border-gray-300 bg-white text-transparent'
                                 }`}
                               >
                                 {side ?? ''}
@@ -513,11 +519,11 @@ export function TTHome() {
                       <input
                         type="text"
                         value={newPlayerName}
-                        onChange={e => setNewPlayerName(e.target.value)}
+                        onChange={(e) => setNewPlayerName(e.target.value)}
                         placeholder="New Player Name"
                         className="new-player-input"
                         autoFocus
-                        onKeyDown={e => {
+                        onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault()
                             handleAddPlayer(e)

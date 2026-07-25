@@ -40,10 +40,10 @@ export function TTMatchDetails() {
       if (matchError) throw matchError
       setMatch(matchData)
 
-      const { data: playersData, error: playersError } = await supabase
+      const { data: playersData, error: playersError } = (await supabase
         .from('tt_match_players')
         .select('player_id, side, player:Players(id, name)')
-        .eq('match_id', id) as { data: MatchPlayer[] | null; error: unknown }
+        .eq('match_id', id)) as { data: MatchPlayer[] | null; error: unknown }
       if (playersError) throw playersError
       setMatchPlayers(playersData || [])
 
@@ -67,20 +67,19 @@ export function TTMatchDetails() {
     loadMatch()
   }, [id, loadMatch])
 
-  const teamA = matchPlayers.filter(mp => mp.side === 'A')
-  const teamB = matchPlayers.filter(mp => mp.side === 'B')
+  const teamA = matchPlayers.filter((mp) => mp.side === 'A')
+  const teamB = matchPlayers.filter((mp) => mp.side === 'B')
   const teamName = (team: MatchPlayer[]) =>
-    team.map(mp => mp.player?.name ?? `#${mp.player_id}`).join(' & ') || '—'
+    team.map((mp) => mp.player?.name ?? `#${mp.player_id}`).join(' & ') || '—'
 
   const won = setsWon(sets)
   const winner = match ? matchWinner(sets, match.best_of) : null
   const needed = match ? setsNeeded(match.best_of) : 0
-  const canAddSet =
-    !!match && match.is_open && winner === null && sets.length < match.best_of
+  const canAddSet = !!match && match.is_open && winner === null && sets.length < match.best_of
 
   // Lokale Anzeige aktualisieren + persistieren
   function updateLocalSet(setId: number, field: 'score_a' | 'score_b', value: number) {
-    setSets(prev => prev.map(s => (s.id === setId ? { ...s, [field]: value } : s)))
+    setSets((prev) => prev.map((s) => (s.id === setId ? { ...s, [field]: value } : s)))
   }
 
   async function persistSet(setId: number, field: 'score_a' | 'score_b', value: number) {
@@ -106,7 +105,7 @@ export function TTMatchDetails() {
       console.error('Error adding set:', err)
       return
     }
-    setSets(prev => [...prev, data])
+    setSets((prev) => [...prev, data])
   }
 
   async function handleDeleteSet(setId: number) {
@@ -121,7 +120,7 @@ export function TTMatchDetails() {
 
     // Verbleibende Saetze fortlaufend neu nummerieren (1..n), damit keine
     // Luecken entstehen (set_number ist unique pro Match).
-    const remaining = sets.filter(s => s.id !== setId)
+    const remaining = sets.filter((s) => s.id !== setId)
     for (let i = 0; i < remaining.length; i++) {
       const desired = i + 1
       if (remaining[i].set_number !== desired) {
@@ -145,7 +144,7 @@ export function TTMatchDetails() {
     const min = Math.max(1, sets.length) // nicht unter die bereits gespielten Saetze
     const value = Math.max(min, next)
     if (value === match.best_of) return
-    setMatch(prev => (prev ? { ...prev, best_of: value } : null)) // optimistisch
+    setMatch((prev) => (prev ? { ...prev, best_of: value } : null)) // optimistisch
     const { error: err } = await supabase
       .from('tt_matches')
       .update({ best_of: value })
@@ -169,7 +168,7 @@ export function TTMatchDetails() {
       console.error('Error toggling is_open:', err)
       return
     }
-    setMatch(prev => (prev ? { ...prev, is_open: newValue } : null))
+    setMatch((prev) => (prev ? { ...prev, is_open: newValue } : null))
   }
 
   async function handleToggleExclude() {
@@ -183,20 +182,22 @@ export function TTMatchDetails() {
       console.error('Error toggling exclude:', err)
       return
     }
-    setMatch(prev => (prev ? { ...prev, exclude_from_overall: newValue } : null))
+    setMatch((prev) => (prev ? { ...prev, exclude_from_overall: newValue } : null))
   }
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-    </div>
-  )
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    )
 
-  if (error || !match) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 text-red-500">
-      Error: {error ?? 'Match not found'}
-    </div>
-  )
+  if (error || !match)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-red-500">
+        Error: {error ?? 'Match not found'}
+      </div>
+    )
 
   const title = match.name || `${teamName(teamA)} vs ${teamName(teamB)}`
 
@@ -206,14 +207,26 @@ export function TTMatchDetails() {
       <div className="game-navbar">
         <div className="nav-left">
           <button onClick={() => navigate('/')} className="nav-back-button">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
           </button>
           <div className="nav-title-group">
             <h1 className="game-title">{title}</h1>
             <p className="game-subtitle">
-              {new Date(match.created_at).toLocaleDateString()} • {match.format === 'singles' ? 'Einzel' : 'Doppel'} • BO{match.best_of}
+              {new Date(match.created_at).toLocaleDateString()} •{' '}
+              {match.format === 'singles' ? 'Einzel' : 'Doppel'} • BO{match.best_of}
             </p>
           </div>
         </div>
@@ -232,7 +245,11 @@ export function TTMatchDetails() {
             className={`status-button ${match.is_open ? 'status-button-open' : 'status-button-closed'} disabled:opacity-40 disabled:cursor-not-allowed`}
           >
             <span className="status-icon-mobile">
-              {match.is_open ? <LockOpenIcon className="w-5 h-5" /> : <LockClosedIcon className="w-5 h-5" />}
+              {match.is_open ? (
+                <LockOpenIcon className="w-5 h-5" />
+              ) : (
+                <LockClosedIcon className="w-5 h-5" />
+              )}
             </span>
             <span className="status-label-desktop">{match.is_open ? 'Open' : 'Closed'}</span>
           </button>
@@ -243,7 +260,9 @@ export function TTMatchDetails() {
             className={`status-button ${match.exclude_from_overall ? 'status-button-excluded' : 'status-button-included'}`}
           >
             <span className="status-icon-mobile">{match.exclude_from_overall ? '✕' : '✓'}</span>
-            <span className="status-label-desktop">{match.exclude_from_overall ? 'Excluded' : 'Included'}</span>
+            <span className="status-label-desktop">
+              {match.exclude_from_overall ? 'Excluded' : 'Included'}
+            </span>
           </button>
         </div>
       </div>
@@ -306,7 +325,7 @@ export function TTMatchDetails() {
             <div className="tt-sets-empty">Noch keine Sätze. Füge den ersten Satz hinzu.</div>
           ) : (
             <div className="tt-sets-list">
-              {sets.map(set => {
+              {sets.map((set) => {
                 const decided = isSetDecided(set.score_a, set.score_b)
                 const aWonSet = decided && set.score_a > set.score_b
                 const bWonSet = decided && set.score_b > set.score_a
@@ -314,16 +333,20 @@ export function TTMatchDetails() {
                   <div key={set.id} className="tt-set-row">
                     <span className="tt-set-label">Satz {set.set_number}</span>
                     <div className="tt-set-scores">
-                      <span className={`tt-set-tag tt-set-tag-a ${aWonSet ? '' : 'opacity-0'}`}>✓</span>
+                      <span className={`tt-set-tag tt-set-tag-a ${aWonSet ? '' : 'opacity-0'}`}>
+                        ✓
+                      </span>
                       <input
                         type="number"
                         min={0}
                         className="tt-set-input"
                         value={set.score_a}
                         disabled={!match.is_open}
-                        onChange={e => updateLocalSet(set.id, 'score_a', parseInt(e.target.value) || 0)}
-                        onBlur={e => persistSet(set.id, 'score_a', parseInt(e.target.value) || 0)}
-                        onFocus={e => e.target.select()}
+                        onChange={(e) =>
+                          updateLocalSet(set.id, 'score_a', parseInt(e.target.value) || 0)
+                        }
+                        onBlur={(e) => persistSet(set.id, 'score_a', parseInt(e.target.value) || 0)}
+                        onFocus={(e) => e.target.select()}
                       />
                       <span className="tt-set-colon">:</span>
                       <input
@@ -332,11 +355,15 @@ export function TTMatchDetails() {
                         className="tt-set-input tt-set-input-b"
                         value={set.score_b}
                         disabled={!match.is_open}
-                        onChange={e => updateLocalSet(set.id, 'score_b', parseInt(e.target.value) || 0)}
-                        onBlur={e => persistSet(set.id, 'score_b', parseInt(e.target.value) || 0)}
-                        onFocus={e => e.target.select()}
+                        onChange={(e) =>
+                          updateLocalSet(set.id, 'score_b', parseInt(e.target.value) || 0)
+                        }
+                        onBlur={(e) => persistSet(set.id, 'score_b', parseInt(e.target.value) || 0)}
+                        onFocus={(e) => e.target.select()}
                       />
-                      <span className={`tt-set-tag tt-set-tag-b ${bWonSet ? '' : 'opacity-0'}`}>✓</span>
+                      <span className={`tt-set-tag tt-set-tag-b ${bWonSet ? '' : 'opacity-0'}`}>
+                        ✓
+                      </span>
                     </div>
                     {match.is_open && (
                       <button

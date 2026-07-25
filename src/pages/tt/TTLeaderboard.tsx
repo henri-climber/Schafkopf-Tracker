@@ -39,7 +39,7 @@ export function TTLeaderboard() {
         .from('Players')
         .select('id, name')
       if (playersError) throw playersError
-      const nameById = new Map<number, string>((playersData || []).map(p => [p.id, p.name]))
+      const nameById = new Map<number, string>((playersData || []).map((p) => [p.id, p.name]))
 
       const { data: matchesData, error: matchesError } = await supabase
         .from('tt_matches')
@@ -53,16 +53,16 @@ export function TTLeaderboard() {
       for (const m of (matchesData as MatchRow[]) || []) {
         const winner = matchWinner(m.tt_sets || [], m.best_of)
         if (!winner) continue
-        const sideA = m.tt_match_players.filter(p => p.side === 'A').map(p => p.player_id)
-        const sideB = m.tt_match_players.filter(p => p.side === 'B').map(p => p.player_id)
+        const sideA = m.tt_match_players.filter((p) => p.side === 'A').map((p) => p.player_id)
+        const sideB = m.tt_match_players.filter((p) => p.side === 'B').map((p) => p.player_id)
         if (sideA.length === 0 || sideB.length === 0) continue
         inputs.push({ sideA, sideB, winner })
       }
 
       const ratings = computeTTRatings(inputs)
       const result: Row[] = Array.from(ratings.values())
-        .filter(r => r.games > 0)
-        .map(r => ({
+        .filter((r) => r.games > 0)
+        .map((r) => ({
           id: r.playerId,
           name: nameById.get(r.playerId) ?? `#${r.playerId}`,
           rating: Math.round(r.rating),
@@ -80,11 +80,12 @@ export function TTLeaderboard() {
     }
   }
 
-  if (loading) return (
-    <div className="loading-container">
-      <div className="spinner"></div>
-    </div>
-  )
+  if (loading)
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+      </div>
+    )
 
   if (error) return <div className="error-container">Error: {error}</div>
 
@@ -103,9 +104,23 @@ export function TTLeaderboard() {
 
       <div className="mobile-scrollable-controls">
         <div className="mobile-action-row">
-          <button onClick={() => navigate('/')} className="back-btn" title="Zurück zur Hauptansicht">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <button
+            onClick={() => navigate('/')}
+            className="back-btn"
+            title="Zurück zur Hauptansicht"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
         </div>
@@ -114,9 +129,23 @@ export function TTLeaderboard() {
       <div className="desktop-scrollable-controls">
         <div className="header-content">
           <div className="desktop-controls-row">
-            <button onClick={() => navigate('/')} className="back-btn" title="Zurück zur Hauptansicht">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <button
+              onClick={() => navigate('/')}
+              className="back-btn"
+              title="Zurück zur Hauptansicht"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
           </div>
@@ -180,9 +209,14 @@ export function TTLeaderboard() {
                     const isTop3 = index < 3
                     const rank = index + 1
                     return (
-                      <tr key={player.id} className={`t-row group ${isTop3 ? 'min-[800px]:hidden' : ''}`}>
+                      <tr
+                        key={player.id}
+                        className={`t-row group ${isTop3 ? 'min-[800px]:hidden' : ''}`}
+                      >
                         <td className="t-cell">
-                          <span className={`rank-badge ${rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other'}`}>
+                          <span
+                            className={`rank-badge ${rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other'}`}
+                          >
                             {rank}
                           </span>
                         </td>

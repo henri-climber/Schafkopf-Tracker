@@ -27,7 +27,7 @@ export interface TTPlayerRating {
  */
 export function computeTTRatings(
   matches: TTEloMatchInput[],
-  options?: { kFactor?: number; baseRating?: number }
+  options?: { kFactor?: number; baseRating?: number },
 ): Map<number, TTPlayerRating> {
   const k = options?.kFactor ?? TT_K_FACTOR
   const base = options?.baseRating ?? TT_BASE_RATING
@@ -57,11 +57,19 @@ export function computeTTRatings(
 
     // Neue Ratings zuerst berechnen (auf Basis des jeweils eigenen Ratings),
     // dann anwenden.
-    const newA = a.map(p => elo.updateRating(expA, aWon, p.rating))
-    const newB = b.map(p => elo.updateRating(expB, bWon, p.rating))
+    const newA = a.map((p) => elo.updateRating(expA, aWon, p.rating))
+    const newB = b.map((p) => elo.updateRating(expB, bWon, p.rating))
 
-    a.forEach((p, i) => { p.rating = newA[i]; p.games += 1; if (aWon) p.wins += 1 })
-    b.forEach((p, i) => { p.rating = newB[i]; p.games += 1; if (bWon) p.wins += 1 })
+    a.forEach((p, i) => {
+      p.rating = newA[i]
+      p.games += 1
+      if (aWon) p.wins += 1
+    })
+    b.forEach((p, i) => {
+      p.rating = newB[i]
+      p.games += 1
+      if (bWon) p.wins += 1
+    })
   }
 
   return ratings

@@ -59,7 +59,6 @@ npm run dev
 
 Main is automatically deployed via vercel.
 
-
 ## Project Structure
 
 Here's a quick overview of the project's structure:

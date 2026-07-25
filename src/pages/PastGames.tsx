@@ -51,8 +51,8 @@ export function PastGames() {
   }
 
   function toggleFilterPlayer(id: number) {
-    setSelectedFilterIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    setSelectedFilterIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     )
   }
 
@@ -68,13 +68,12 @@ export function PastGames() {
   }
   filterPlayers.sort((a, b) => a.name.localeCompare(b.name))
 
-  const displayedGames = selectedFilterIds.length === 0
-    ? pastGames
-    : pastGames.filter(game =>
-        selectedFilterIds.every(id =>
-          game.table_players?.some(tp => tp.player_id === id)
+  const displayedGames =
+    selectedFilterIds.length === 0
+      ? pastGames
+      : pastGames.filter((game) =>
+          selectedFilterIds.every((id) => game.table_players?.some((tp) => tp.player_id === id)),
         )
-      )
 
   return (
     <div className="past-games-container">
@@ -88,7 +87,7 @@ export function PastGames() {
       <div className="past-games-content">
         {filterPlayers.length > 0 && (
           <div className="player-filter-bar">
-            {filterPlayers.map(player => (
+            {filterPlayers.map((player) => (
               <button
                 key={player.id}
                 onClick={() => toggleFilterPlayer(player.id)}
@@ -128,10 +127,13 @@ export function PastGames() {
                 <div className="past-game-date">
                   Played on {new Date(game.created_at).toLocaleDateString()}
                 </div>
-                <div className={`past-game-badge ${game.exclude_from_overall
-                    ? 'past-game-badge-excluded'
-                    : 'past-game-badge-included'
-                  }`}>
+                <div
+                  className={`past-game-badge ${
+                    game.exclude_from_overall
+                      ? 'past-game-badge-excluded'
+                      : 'past-game-badge-included'
+                  }`}
+                >
                   {game.exclude_from_overall ? 'Excluded' : 'Included'}
                 </div>
               </button>

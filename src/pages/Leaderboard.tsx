@@ -24,41 +24,40 @@ const SEMESTERS: Semester[] = [
     id: 'sem1',
     label: 'Semester 1 (September 2024 - March 2025)',
     startDate: '2024-09-01T00:00:00.000Z',
-    endDate: '2025-03-31T23:59:59.999Z'
+    endDate: '2025-03-31T23:59:59.999Z',
   },
   {
     id: 'sem2',
     label: 'Semester 2 (April 2025 - August 2025)',
     startDate: '2025-04-01T00:00:00.000Z',
-    endDate: '2025-08-31T23:59:59.999Z'
+    endDate: '2025-08-31T23:59:59.999Z',
   },
   {
     id: 'sem3',
     label: 'Semester 3 (September 2025 - April 2026)',
     startDate: '2025-09-01T00:00:00.000Z',
-    endDate: '2026-02-27T23:59:59.999Z'
+    endDate: '2026-02-27T23:59:59.999Z',
   },
   {
     id: 'sem4',
     label: 'Semester 4 (April 2026 - October 2026)',
     startDate: '2026-02-28T00:00:00.000Z',
-    endDate: '2026-09-30T23:59:59.999Z'
-  }
+    endDate: '2026-09-30T23:59:59.999Z',
+  },
 ]
 
 const SEMESTER_3_OFFSETS: Record<string, number> = {
-  'Nikita': -2,
-  'Quentin': -1,
-  'Jost': 1,
-  'Finy': -4,
-  'Riccardo': 5,
-  'Emil': 0,
-  'Henri': 4,
-  'Timon': -2,
-  'Lukas': 1,
-  'Pfirrmann': -2
+  Nikita: -2,
+  Quentin: -1,
+  Jost: 1,
+  Finy: -4,
+  Riccardo: 5,
+  Emil: 0,
+  Henri: 4,
+  Timon: -2,
+  Lukas: 1,
+  Pfirrmann: -2,
 }
-
 
 export function Leaderboard() {
   const navigate = useNavigate()
@@ -68,8 +67,10 @@ export function Leaderboard() {
   const [isAddingPlayer, setIsAddingPlayer] = useState(false)
   const [newPlayerName, setNewPlayerName] = useState('')
   const [includeOngoing, setIncludeOngoing] = useState(false)
-  const [selectedSemesterId, setSelectedSemesterId] = useState<string>(SEMESTERS[SEMESTERS.length - 1].id)
-const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEMESTERS[0]
+  const [selectedSemesterId, setSelectedSemesterId] = useState<string>(
+    SEMESTERS[SEMESTERS.length - 1].id,
+  )
+  const selectedSemester = SEMESTERS.find((s) => s.id === selectedSemesterId) || SEMESTERS[0]
 
   useEffect(() => {
     console.log(selectedSemester)
@@ -95,15 +96,13 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
     setError(null)
     try {
       // 1. First, get all players
-      const { data: playersData, error: playersError } = await supabase
-        .from('Players')
-        .select('*')
+      const { data: playersData, error: playersError } = await supabase.from('Players').select('*')
 
       if (playersError) throw playersError
 
       // Initialize players with zero scores
       const playerMap = new Map(
-        playersData.map(p => [p.id, { ...p, totalScore: 0, gamesPlayed: 0 }])
+        playersData.map((p) => [p.id, { ...p, totalScore: 0, gamesPlayed: 0 }]),
       )
 
       // 2. Get all tables that aren't excluded
@@ -134,7 +133,7 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
         if (roundsError) throw roundsError
         if (!roundsData?.length) continue // Skip if no rounds found
 
-        const roundIds = roundsData.map(r => r.id)
+        const roundIds = roundsData.map((r) => r.id)
 
         // Then get all scores for these rounds
         const { data: scoresData, error: scoresError } = await supabase
@@ -145,19 +144,22 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
         if (scoresError) throw scoresError
         console.log(scoresData)
         // Calculate total raw score per player for this table
-        const playerScores = scoresData.reduce((acc, score) => {
-          if (!acc[score.player_id]) {
-            acc[score.player_id] = 0
-          }
-          acc[score.player_id] += score.raw_score
-          return acc
-        }, {} as Record<number, number>)
+        const playerScores = scoresData.reduce(
+          (acc, score) => {
+            if (!acc[score.player_id]) {
+              acc[score.player_id] = 0
+            }
+            acc[score.player_id] += score.raw_score
+            return acc
+          },
+          {} as Record<number, number>,
+        )
 
         // Convert to array and sort by score
         const sortedPlayers = Object.entries(playerScores)
           .map(([playerId, total_raw_score]) => ({
             player_id: parseInt(playerId),
-            total_raw_score
+            total_raw_score,
           }))
           .sort((a, b) => b.total_raw_score - a.total_raw_score)
 
@@ -177,24 +179,31 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
 
       // Convert player map to sorted array
       const sortedPlayers = Array.from(playerMap.values())
-        .map(player => {
+        .map((player) => {
           // Apply Semester 3 offsets
           if (selectedSemester.id === 'sem3') {
             const offset = SEMESTER_3_OFFSETS[player.name] || 0
             return {
               ...player,
-              totalScore: player.totalScore + offset
+              totalScore: player.totalScore + offset,
             }
           }
           return player
         })
-        .filter(player => player.gamesPlayed > 0)
-        .sort((a, b) => b.totalScore - a.totalScore || b.gamesPlayed - a.gamesPlayed || a.name.localeCompare(b.name))
+        .filter((player) => player.gamesPlayed > 0)
+        .sort(
+          (a, b) =>
+            b.totalScore - a.totalScore ||
+            b.gamesPlayed - a.gamesPlayed ||
+            a.name.localeCompare(b.name),
+        )
 
       setPlayers(sortedPlayers)
     } catch (err) {
       console.error('Error loading leaderboard:', err)
-      setError(err instanceof Error ? err.message : 'An error occurred while loading the leaderboard')
+      setError(
+        err instanceof Error ? err.message : 'An error occurred while loading the leaderboard',
+      )
     } finally {
       setLoading(false)
     }
@@ -205,9 +214,7 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
     if (!newPlayerName.trim()) return
 
     try {
-      const { error } = await supabase
-        .from('Players')
-        .insert([{ name: newPlayerName.trim() }])
+      const { error } = await supabase.from('Players').insert([{ name: newPlayerName.trim() }])
 
       if (error) throw error
 
@@ -219,17 +226,14 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
     }
   }
 
-  if (loading) return (
-    <div className="loading-container">
-      <div className="spinner"></div>
-    </div>
-  )
+  if (loading)
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+      </div>
+    )
 
-  if (error) return (
-    <div className="error-container">
-      Error: {error}
-    </div>
-  )
+  if (error) return <div className="error-container">Error: {error}</div>
 
   const top3 = players.slice(0, 3)
 
@@ -238,7 +242,6 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
       {/* Header Section */}
       <div className="header-sticky">
         <div className="header-content">
-
           {/* Mobile layout (< 800px): only title stays sticky */}
           <div className="mobile-header">
             <h1 className="page-title">Leaderboard</h1>
@@ -263,14 +266,43 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
           ))}
         </select>
         <div className="mobile-action-row">
-          <button onClick={() => navigate('/')} className="back-btn" title="Zurück zur Hauptansicht">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <button
+            onClick={() => navigate('/')}
+            className="back-btn"
+            title="Zurück zur Hauptansicht"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
-          <button onClick={() => setIsAddingPlayer(true)} className="add-player-btn" title="Add Player">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          <button
+            onClick={() => setIsAddingPlayer(true)}
+            className="add-player-btn"
+            title="Add Player"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
             </svg>
             <span>Add Player</span>
           </button>
@@ -295,9 +327,23 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
       <div className="desktop-scrollable-controls">
         <div className="header-content">
           <div className="desktop-controls-row">
-            <button onClick={() => navigate('/')} className="back-btn" title="Zurück zur Hauptansicht">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <button
+              onClick={() => navigate('/')}
+              className="back-btn"
+              title="Zurück zur Hauptansicht"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
             <div className="controls-group">
@@ -312,9 +358,24 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
                   </option>
                 ))}
               </select>
-              <button onClick={() => setIsAddingPlayer(true)} className="add-player-btn" title="Add Player">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <button
+                onClick={() => setIsAddingPlayer(true)}
+                className="add-player-btn"
+                title="Add Player"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
                 </svg>
                 <span>Add Player</span>
               </button>
@@ -331,15 +392,13 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
                 />
                 <div className="toggle-switch"></div>
               </div>
-              <span className="toggle-text">
-                Include ongoing games
-              </span>
+              <span className="toggle-text">Include ongoing games</span>
             </label>
           </div>
         </div>
       </div>
 
-{isAddingPlayer && (
+      {isAddingPlayer && (
         <div className="modal-overlay">
           <form onSubmit={handleAddPlayer} className="modal-panel">
             <h3 className="modal-title">Add New Player</h3>
@@ -362,10 +421,7 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
               >
                 Cancel
               </button>
-              <button
-                type="submit"
-                className="btn-save"
-              >
+              <button type="submit" className="btn-save">
                 Save
               </button>
             </div>
@@ -374,7 +430,6 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
       )}
 
       <div className="main-content">
-
         {/* Podium Section - Only visible >= 800px */}
         {top3.length > 0 && (
           <div className="podium-container">
@@ -385,7 +440,10 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
                 <div className="podium-number podium-number-2">2</div>
                 <div className="text-center">
                   <div className="podium-name">{top3[1].name}</div>
-                  <div className="podium-score">{top3[1].totalScore > 0 ? '+' : ''}{top3[1].totalScore}</div>
+                  <div className="podium-score">
+                    {top3[1].totalScore > 0 ? '+' : ''}
+                    {top3[1].totalScore}
+                  </div>
                 </div>
                 <div className="podium-games">{top3[1].gamesPlayed} games</div>
               </div>
@@ -399,7 +457,8 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
                 <div className="text-center">
                   <div className="podium-name">{top3[0].name}</div>
                   <div className="podium-score-1">
-                    {top3[0].totalScore > 0 ? '+' : ''}{top3[0].totalScore}
+                    {top3[0].totalScore > 0 ? '+' : ''}
+                    {top3[0].totalScore}
                   </div>
                 </div>
                 <div className="podium-games-1">{top3[0].gamesPlayed} games</div>
@@ -413,7 +472,10 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
                 <div className="podium-number podium-number-3">3</div>
                 <div className="text-center">
                   <div className="podium-name">{top3[2].name}</div>
-                  <div className="podium-score">{top3[2].totalScore > 0 ? '+' : ''}{top3[2].totalScore}</div>
+                  <div className="podium-score">
+                    {top3[2].totalScore > 0 ? '+' : ''}
+                    {top3[2].totalScore}
+                  </div>
                 </div>
                 <div className="podium-games">{top3[2].gamesPlayed} games</div>
               </div>
@@ -438,17 +500,26 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
                   {players.map((player, index) => {
                     // Hide top 3 players on desktop since they are in the podium
                     // Show everyone on mobile (< 800px)
-                    const isTop3 = index < 3;
-                    const rank = index + 1;
+                    const isTop3 = index < 3
+                    const rank = index + 1
 
                     return (
-                      <tr key={player.id} className={`t-row group ${isTop3 ? 'min-[800px]:hidden' : ''}`}>
+                      <tr
+                        key={player.id}
+                        className={`t-row group ${isTop3 ? 'min-[800px]:hidden' : ''}`}
+                      >
                         <td className="t-cell">
-                          <span className={`rank-badge ${rank === 1 ? 'rank-1' :
-                            rank === 2 ? 'rank-2' :
-                              rank === 3 ? 'rank-3' :
-                                'rank-other'
-                            }`}>
+                          <span
+                            className={`rank-badge ${
+                              rank === 1
+                                ? 'rank-1'
+                                : rank === 2
+                                  ? 'rank-2'
+                                  : rank === 3
+                                    ? 'rank-3'
+                                    : 'rank-other'
+                            }`}
+                          >
                             {rank}
                           </span>
                         </td>
@@ -459,10 +530,17 @@ const selectedSemester = SEMESTERS.find(s => s.id === selectedSemesterId) || SEM
                           <span className="games-text">{player.gamesPlayed}</span>
                         </td>
                         <td className="t-cell-right">
-                          <span className={`score-text ${player.totalScore > 0 ? 'score-positive' :
-                            player.totalScore < 0 ? 'score-negative' : 'score-neutral'
-                            }`}>
-                            {player.totalScore > 0 ? '+' : ''}{player.totalScore}
+                          <span
+                            className={`score-text ${
+                              player.totalScore > 0
+                                ? 'score-positive'
+                                : player.totalScore < 0
+                                  ? 'score-negative'
+                                  : 'score-neutral'
+                            }`}
+                          >
+                            {player.totalScore > 0 ? '+' : ''}
+                            {player.totalScore}
                           </span>
                         </td>
                       </tr>

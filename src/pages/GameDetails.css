@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 .game-details-container {
   @apply min-h-screen bg-gray-50 text-gray-900 pb-20;
@@ -321,8 +321,12 @@
 /* ── Responsive show/hide ── */
 
 @media (max-width: 820px) {
-  .score-table-container { display: none; }
-  .btn-add-round { display: none; }
+  .score-table-container {
+    display: none;
+  }
+  .btn-add-round {
+    display: none;
+  }
   .game-details-container {
     height: 100%;
     min-height: 0;
@@ -338,7 +342,13 @@
 }
 
 @media (min-width: 821px) {
-  .mobile-totals-bar { display: none; }
-  .card-view-container { display: none; }
-  .btn-add-round-mobile { display: none; }
+  .mobile-totals-bar {
+    display: none;
+  }
+  .card-view-container {
+    display: none;
+  }
+  .btn-add-round-mobile {
+    display: none;
+  }
 }

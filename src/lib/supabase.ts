@@ -21,19 +21,19 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 })
 
-  // Test the connection
-  ; (async () => {
-    try {
-      const { error } = await supabase.from('Players').select('count', { count: 'exact', head: true })
-      if (error) {
-        console.error('Supabase connection test failed:', error)
-      } else {
-        console.log('Supabase connection test successful')
-      }
-    } catch (error) {
-      console.error('Supabase connection test error:', error)
+// Test the connection
+;(async () => {
+  try {
+    const { error } = await supabase.from('Players').select('count', { count: 'exact', head: true })
+    if (error) {
+      console.error('Supabase connection test failed:', error)
+    } else {
+      console.log('Supabase connection test successful')
     }
-  })()
+  } catch (error) {
+    console.error('Supabase connection test error:', error)
+  }
+})()
 
 // Type definitions based on your schema
 export type Player = {
