@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
+        env:
+          # The Supabase client throws at import time when these are absent, and
+          # `vite build` evaluates the module graph. Dummy values are enough — the
+          # build never issues a request.
+          VITE_SUPABASE_URL_SCHAF: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY_SCHAF: ci-placeholder-anon-key

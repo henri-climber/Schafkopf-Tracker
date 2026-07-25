@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGameSubscription } from '../hooks/useGameSubscription';
 import { supabase } from '../lib/supabase';
+import type { PostgrestError } from '@supabase/supabase-js';
 import {
   createColumnHelper,
   flexRender,
@@ -100,7 +101,7 @@ export function GameDetails() {
           table_id,
           player:Players (id, name, created_at)
         `)
-        .eq('table_id', id) as { data: TablePlayer[] | null, error: any };
+        .eq('table_id', id) as { data: TablePlayer[] | null, error: PostgrestError | null };
 
       if (playersError) throw playersError;
 

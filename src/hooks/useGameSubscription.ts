@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, type RoundScore } from '../lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface UseGameSubscriptionProps {
@@ -8,7 +8,7 @@ interface UseGameSubscriptionProps {
     onGameUpdate: () => void;
     onPlayerUpdate: () => void;
     onRoundsUpdate: () => void;
-    onScoreUpdate: (newScore: any) => void;
+    onScoreUpdate: (newScore: RoundScore) => void;
 }
 
 export function useGameSubscription({
@@ -80,7 +80,7 @@ export function useGameSubscription({
                     },
                     (payload) => {
                         // Check if this score is relevant to our current rounds
-                        const newScore = payload.new as any;
+                        const newScore = payload.new as RoundScore;
                         if (newScore && roundIdsRef.current.includes(newScore.round_id)) {
                             onScoreUpdate(newScore);
                         }
