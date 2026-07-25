@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import type { TTMatch, TTSet, TTSide } from '../../lib/supabase'
 import { matchWinner, setsWon, setsNeeded, isSetDecided } from '../../lib/tt'

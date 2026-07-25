@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router'
 import { useGameSubscription } from '../hooks/useGameSubscription'
 import { supabase } from '../lib/supabase'
 import type { PostgrestError } from '@supabase/supabase-js'

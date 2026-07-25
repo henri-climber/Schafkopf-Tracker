@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import type { TTSide } from '../../lib/supabase'
 import { computeTTRatings, type TTEloMatchInput } from '../../lib/elo'

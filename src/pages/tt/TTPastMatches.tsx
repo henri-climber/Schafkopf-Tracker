@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { supabase } from '../../lib/supabase'
 import type { TTFormat, TTSide } from '../../lib/supabase'
