@@ -104,7 +104,7 @@ export function PlayerScoreChart({ startDate, endDate }: Props) {
       }))
 
       // 2. Get all tables with their creation dates
-      let query = supabase
+      const query = supabase
         .from('Tables')
         .select('id, created_at')
         .eq('exclude_from_overall', false)
