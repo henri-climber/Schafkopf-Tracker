@@ -44,12 +44,19 @@ npm install
 
 ### 3. Configure Environment Variables
 
-Create a `.env` file in the root directory of the project and add your Supabase credentials.
+Copy `.env.example` to `.env` and fill in your Supabase credentials.
+
+```bash
+cp .env.example .env
+```
 
 ```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_SUPABASE_URL_SCHAF=your_supabase_url
+VITE_SUPABASE_ANON_KEY_SCHAF=your_supabase_anon_key
 ```
+
+Both are required — `src/lib/supabase.ts` throws at import time if either is
+missing, so the app will not boot without them.
 
 ### 4. Run the Development Server
 
@@ -58,6 +65,30 @@ npm run dev
 ```
 
 Main is automatically deployed via vercel.
+
+### 5. Useful Scripts
+
+```bash
+npm run typecheck    # tsc -b, also runs as part of npm run build
+npm run lint
+npm run test         # vitest, domain logic only
+npm run format       # prettier --write .
+npm run types:db     # regenerate Supabase types (requires `supabase login`)
+```
+
+## Known Limitations
+
+**There is no authentication, and the database is not access-controlled.** The
+Supabase anon key ships in the client bundle, and every RLS policy is
+`USING (true)` / `WITH CHECK (true)`. Anyone who has the deployed URL can read,
+create, edit and delete every player, game and score.
+
+This is a deliberate tradeoff: the app is a private link shared among about ten
+friends, and adding accounts would cost more than it is worth. It stops being
+acceptable the moment the URL spreads beyond that group — at which point the fix
+is Supabase Auth plus RLS policies keyed to `authenticated`.
+
+The UI also mixes German and English labels, which is untidy but harmless.
 
 ## Project Structure
 

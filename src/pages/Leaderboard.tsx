@@ -73,7 +73,6 @@ export function Leaderboard() {
   const selectedSemester = SEMESTERS.find((s) => s.id === selectedSemesterId) || SEMESTERS[0]
 
   useEffect(() => {
-    console.log(selectedSemester)
     loadLeaderboard()
   }, [includeOngoing, selectedSemesterId])
 
@@ -121,7 +120,6 @@ export function Leaderboard() {
       const { data: tablesData, error: tablesError } = await query
 
       if (tablesError) throw tablesError
-      console.log(tablesData)
       // 3. For each table, get players and their scores
       for (const table of tablesData) {
         // First get all round IDs for this table
@@ -142,7 +140,6 @@ export function Leaderboard() {
           .in('round_id', roundIds)
 
         if (scoresError) throw scoresError
-        console.log(scoresData)
         // Calculate total raw score per player for this table
         const playerScores = scoresData.reduce(
           (acc, score) => {
@@ -163,7 +160,6 @@ export function Leaderboard() {
           }))
           .sort((a, b) => b.total_raw_score - a.total_raw_score)
 
-        console.log(sortedPlayers)
         // Get points distribution based on player count
         const points = getPointsDistribution(sortedPlayers.length)
 
