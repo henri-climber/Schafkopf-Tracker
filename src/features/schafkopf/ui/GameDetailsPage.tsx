@@ -17,6 +17,7 @@ import type {
   RoundScore,
   TablePlayer as TablePlayerRow,
 } from '@/shared/supabase/types'
+import { roundSum } from '@/features/schafkopf/domain/scoring'
 
 /** table_players joined to its player — the shape the nested select returns. */
 interface TablePlayer extends TablePlayerRow {
@@ -200,7 +201,7 @@ export function GameDetailsPage() {
     const roundNumberColumn = columnHelper.accessor('roundNumber', {
       header: '#',
       cell: (info) => {
-        const sum = Object.values(info.row.original.scores).reduce((a, b) => a + b, 0)
+        const sum = roundSum(info.row.original.scores)
         const isInvalid = sum !== 0
         return (
           <div className="round-number-cell">
@@ -577,7 +578,7 @@ export function GameDetailsPage() {
               </thead>
               <tbody className="table-body">
                 {table.getRowModel().rows.map((row) => {
-                  const sum = Object.values(row.original.scores).reduce((a, b) => a + b, 0)
+                  const sum = roundSum(row.original.scores)
                   const isInvalid = sum !== 0
                   return (
                     <tr
@@ -618,7 +619,7 @@ export function GameDetailsPage() {
             </div>
           ) : (
             tableData.map((row) => {
-              const sum = Object.values(row.scores).reduce((a, b) => a + b, 0)
+              const sum = roundSum(row.scores)
               const isInvalid = sum !== 0
               const isExpanded = expandedRoundId === row.roundId
               return (

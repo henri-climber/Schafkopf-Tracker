@@ -12,6 +12,11 @@ import {
 import { supabase } from '@/shared/supabase/client'
 import '@/features/schafkopf/ui/ScoreHistoryChart.css'
 import type { Player as PlayerData } from '@/shared/supabase/types'
+import {
+  computeTableResults,
+  cumulativeSeries,
+  type TableWithScores,
+} from '@/features/schafkopf/domain/scoring'
 
 interface PlayerScore {
   id: number
@@ -119,14 +124,10 @@ export function ScoreHistoryChart({ startDate, endDate }: Props) {
 
       if (tablesError) throw tablesError
 
-      // Process each table
-      const playerScores: PlayerScore[] = [...initialPlayers]
-      const timestampScores = new Map<string, { [key: string]: number }>()
-
+      // Gather each table's scores. Still one round-trip pair per table —
+      // collapsing that is the next commit's job.
+      const tables: TableWithScores[] = []
       for (const table of tablesData) {
-        const timestamp = table.created_at // Use full timestamp
-
-        // Get rounds for this table
         const { data: roundsData, error: roundsError } = await supabase
           .from('Rounds')
           .select('id')
@@ -137,61 +138,35 @@ export function ScoreHistoryChart({ startDate, endDate }: Props) {
 
         const roundIds = roundsData.map((r) => r.id)
 
-        // Get scores for these rounds
         const { data: scoresData, error: scoresError } = await supabase
           .from('round_scores')
           .select('player_id, raw_score')
           .in('round_id', roundIds)
 
         if (scoresError) throw scoresError
-
-        // Calculate scores for this table
-        const tableScores = scoresData.reduce(
-          (acc, score) => {
-            if (!acc[score.player_id]) acc[score.player_id] = 0
-            acc[score.player_id] += score.raw_score
-            return acc
-          },
-          {} as Record<number, number>,
-        )
-
-        // Sort players by score and assign points
-        const sortedPlayers = Object.entries(tableScores)
-          .map(([playerId, score]) => ({
-            playerId: parseInt(playerId),
-            score,
-          }))
-          .sort((a, b) => b.score - a.score)
-
-        const points = getPointsDistribution(sortedPlayers.length)
-
-        // Update running totals for each player
-        sortedPlayers.forEach((player, index) => {
-          const playerIndex = playerScores.findIndex((p) => p.id === player.playerId)
-          if (playerIndex !== -1) {
-            const currentScore = playerScores[playerIndex].scores.reduce(
-              (total: number, entry: ScoreEntry) => total + entry.score,
-              0,
-            )
-
-            const newScore: ScoreEntry = {
-              timestamp,
-              score: points[index] || 0,
-            }
-
-            playerScores[playerIndex].scores.push(newScore)
-
-            // Update timestamp-based scores
-            if (!timestampScores.has(timestamp)) {
-              timestampScores.set(timestamp, {})
-            }
-            const timestampEntry = timestampScores.get(timestamp)!
-            timestampEntry[playerScores[playerIndex].name] = currentScore + (points[index] || 0)
-          }
-        })
+        tables.push({ id: table.id, created_at: table.created_at, scores: scoresData })
       }
 
-      // Convert timestampScores to chart data format
+      // Rules live in the domain module — the same ones the leaderboard uses,
+      // so the two panels can no longer disagree.
+      const playerScores: PlayerScore[] = [...initialPlayers]
+      const playersById = new Map(playerScores.map((player) => [player.id, player]))
+      const series = cumulativeSeries(computeTableResults(tables))
+
+      // Recharts wants one row per timestamp, keyed by player name. Players
+      // absent from a table are absent from its row, which draws a gap.
+      const timestampScores = new Map<string, { [key: string]: number }>()
+      for (const point of series) {
+        const row = timestampScores.get(point.timestamp) ?? {}
+        for (const [playerId, total] of point.totals) {
+          const player = playersById.get(playerId)
+          if (!player) continue
+          player.scores.push({ timestamp: point.timestamp, score: total })
+          row[player.name] = total
+        }
+        timestampScores.set(point.timestamp, row)
+      }
+
       const chartData = Array.from(timestampScores.entries())
         .map(([timestamp, scores]) => ({
           timestamp,
@@ -208,20 +183,6 @@ export function ScoreHistoryChart({ startDate, endDate }: Props) {
       )
     } finally {
       setLoading(false)
-    }
-  }
-
-  function getPointsDistribution(playerCount: number): number[] {
-    switch (playerCount) {
-      case 4:
-        return [2, 1, -1, -2]
-      case 5:
-        return [2, 1, 0, -1, -2]
-      case 6:
-        return [3, 2, 1, -1, -2, -3]
-      default:
-        console.warn(`Unexpected player count: ${playerCount}`)
-        return []
     }
   }
 

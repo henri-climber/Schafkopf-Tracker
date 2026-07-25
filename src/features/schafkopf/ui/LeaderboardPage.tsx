@@ -4,58 +4,22 @@ import { supabase } from '@/shared/supabase/client'
 import { ScoreHistoryChart } from '@/features/schafkopf/ui/ScoreHistoryChart'
 import '@/shared/styles/leaderboard.css'
 import type { Player as PlayerRow } from '@/shared/supabase/types'
+import {
+  accumulateLeaderboard,
+  computeTableResults,
+  type TableWithScores,
+} from '@/features/schafkopf/domain/scoring'
+import {
+  currentSemester,
+  offsetsFor,
+  SEMESTERS,
+  semesterById,
+} from '@/features/schafkopf/domain/semesters'
 
 /** A player row plus the standings the leaderboard computes for it. */
 interface Player extends PlayerRow {
   totalScore: number
   gamesPlayed: number
-}
-
-interface Semester {
-  id: string
-  label: string
-  startDate: string
-  endDate: string
-}
-
-const SEMESTERS: Semester[] = [
-  {
-    id: 'sem1',
-    label: 'Semester 1 (September 2024 - March 2025)',
-    startDate: '2024-09-01T00:00:00.000Z',
-    endDate: '2025-03-31T23:59:59.999Z',
-  },
-  {
-    id: 'sem2',
-    label: 'Semester 2 (April 2025 - August 2025)',
-    startDate: '2025-04-01T00:00:00.000Z',
-    endDate: '2025-08-31T23:59:59.999Z',
-  },
-  {
-    id: 'sem3',
-    label: 'Semester 3 (September 2025 - April 2026)',
-    startDate: '2025-09-01T00:00:00.000Z',
-    endDate: '2026-02-27T23:59:59.999Z',
-  },
-  {
-    id: 'sem4',
-    label: 'Semester 4 (April 2026 - October 2026)',
-    startDate: '2026-02-28T00:00:00.000Z',
-    endDate: '2026-09-30T23:59:59.999Z',
-  },
-]
-
-const SEMESTER_3_OFFSETS: Record<string, number> = {
-  Nikita: -2,
-  Quentin: -1,
-  Jost: 1,
-  Finy: -4,
-  Riccardo: 5,
-  Emil: 0,
-  Henri: 4,
-  Timon: -2,
-  Lukas: 1,
-  Pfirrmann: -2,
 }
 
 export function LeaderboardPage() {
@@ -66,28 +30,12 @@ export function LeaderboardPage() {
   const [isAddingPlayer, setIsAddingPlayer] = useState(false)
   const [newPlayerName, setNewPlayerName] = useState('')
   const [includeOngoing, setIncludeOngoing] = useState(false)
-  const [selectedSemesterId, setSelectedSemesterId] = useState<string>(
-    SEMESTERS[SEMESTERS.length - 1].id,
-  )
-  const selectedSemester = SEMESTERS.find((s) => s.id === selectedSemesterId) || SEMESTERS[0]
+  const [selectedSemesterId, setSelectedSemesterId] = useState<string>(() => currentSemester().id)
+  const selectedSemester = semesterById(selectedSemesterId) ?? currentSemester()
 
   useEffect(() => {
     loadLeaderboard()
   }, [includeOngoing, selectedSemesterId])
-
-  function getPointsDistribution(playerCount: number): number[] {
-    switch (playerCount) {
-      case 4:
-        return [2, 1, -1, -2]
-      case 5:
-        return [2, 1, 0, -1, -2]
-      case 6:
-        return [3, 2, 1, -1, -2, -3]
-      default:
-        console.warn(`Unexpected player count: ${playerCount}`)
-        return []
-    }
-  }
 
   async function loadLeaderboard() {
     setLoading(true)
@@ -98,15 +46,10 @@ export function LeaderboardPage() {
 
       if (playersError) throw playersError
 
-      // Initialize players with zero scores
-      const playerMap = new Map(
-        playersData.map((p) => [p.id, { ...p, totalScore: 0, gamesPlayed: 0 }]),
-      )
-
       // 2. Get all tables that aren't excluded
       let query = supabase
         .from('Tables')
-        .select('id, name, exclude_from_overall')
+        .select('id, created_at')
         .eq('exclude_from_overall', false)
         .gte('created_at', selectedSemester.startDate)
         .lte('created_at', selectedSemester.endDate)
@@ -119,9 +62,11 @@ export function LeaderboardPage() {
       const { data: tablesData, error: tablesError } = await query
 
       if (tablesError) throw tablesError
-      // 3. For each table, get players and their scores
+
+      // 3. For each table, gather its scores. Still one round-trip pair per
+      //    table — collapsing that is the next commit's job.
+      const tables: TableWithScores[] = []
       for (const table of tablesData) {
-        // First get all round IDs for this table
         const { data: roundsData, error: roundsError } = await supabase
           .from('Rounds')
           .select('id')
@@ -132,58 +77,27 @@ export function LeaderboardPage() {
 
         const roundIds = roundsData.map((r) => r.id)
 
-        // Then get all scores for these rounds
         const { data: scoresData, error: scoresError } = await supabase
           .from('round_scores')
           .select('player_id, raw_score')
           .in('round_id', roundIds)
 
         if (scoresError) throw scoresError
-        // Calculate total raw score per player for this table
-        const playerScores = scoresData.reduce(
-          (acc, score) => {
-            if (!acc[score.player_id]) {
-              acc[score.player_id] = 0
-            }
-            acc[score.player_id] += score.raw_score
-            return acc
-          },
-          {} as Record<number, number>,
-        )
-
-        // Convert to array and sort by score
-        const sortedPlayers = Object.entries(playerScores)
-          .map(([playerId, total_raw_score]) => ({
-            player_id: parseInt(playerId),
-            total_raw_score,
-          }))
-          .sort((a, b) => b.total_raw_score - a.total_raw_score)
-
-        // Get points distribution based on player count
-        const points = getPointsDistribution(sortedPlayers.length)
-
-        // Assign points to players
-        sortedPlayers.forEach((player, index) => {
-          const currentPlayer = playerMap.get(player.player_id)
-          if (currentPlayer) {
-            currentPlayer.totalScore += points[index] || 0
-            currentPlayer.gamesPlayed += 1
-          }
-        })
+        tables.push({ id: table.id, created_at: table.created_at, scores: scoresData })
       }
 
-      // Convert player map to sorted array
-      const sortedPlayers = Array.from(playerMap.values())
+      // 4. Rules live in the domain module; this component only presents them.
+      const standings = accumulateLeaderboard(computeTableResults(tables))
+      const offsets = offsetsFor(selectedSemester.id)
+
+      const sortedPlayers = playersData
         .map((player) => {
-          // Apply Semester 3 offsets
-          if (selectedSemester.id === 'sem3') {
-            const offset = SEMESTER_3_OFFSETS[player.name] || 0
-            return {
-              ...player,
-              totalScore: player.totalScore + offset,
-            }
+          const entry = standings.get(player.id)
+          return {
+            ...player,
+            totalScore: (entry?.totalPoints ?? 0) + (offsets[player.id] ?? 0),
+            gamesPlayed: entry?.gamesPlayed ?? 0,
           }
-          return player
         })
         .filter((player) => player.gamesPlayed > 0)
         .sort(
