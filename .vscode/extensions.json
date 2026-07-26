@@ -1,0 +1,7 @@
+{
+  // Tailwind CSS IntelliSense understands @apply, @reference, @theme, @plugin
+  // and @source. Without it VS Code's built-in CSS linter reports every one of
+  // them as "Unknown at rule", which is a false positive — Vite compiles the
+  // CSS with Tailwind long before the editor's linter sees it.
+  "recommendations": ["bradlc.vscode-tailwindcss", "esbenp.prettier-vscode"]
+}
