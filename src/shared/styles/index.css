@@ -1,7 +1,56 @@
-@import 'tailwindcss';
-@config "../../../tailwind.config.js";
+/*
+ * The single Tailwind entry point. Every other stylesheet uses
+ * `@reference "@/shared/styles/index.css"` so that @apply can resolve the theme
+ * without each file emitting its own copy of the framework.
+ */
+/*
+ * `source(none)` disables automatic source detection and the two @source rules
+ * scope it to the app. Without this v4 walks up from this file and scans the
+ * whole repo — including the vendored agent-skill markdown in .agents/ — and
+ * generates a utility for every class-shaped string it finds there.
+ */
+@import 'tailwindcss' source(none);
+@source "../../../index.html";
+@source "../../../src/**/*.{ts,tsx}";
+@plugin "tailwindcss-animate";
 
-@tailwind utilities;
+/*
+ * Design tokens, derived from what the app actually uses rather than invented.
+ * Frequencies across the stylesheets: bg-white x39, bg-gray-50 x27,
+ * border-gray-200 x20, text-gray-400 x22, text-blue-600 x14.
+ *
+ * The positive/negative pair is the one genuinely domain-specific token here —
+ * score-positive, score-negative, total-positive, total-negative and
+ * podium-score all encode the same "is this player up or down" idea.
+ */
+@theme {
+  /* surfaces */
+  --color-surface: #ffffff;
+  --color-surface-muted: #f9fafb;
+  --color-surface-sunken: #f3f4f6;
+
+  /* borders */
+  --color-border: #e5e7eb;
+  --color-border-subtle: #f3f4f6;
+
+  /* text */
+  --color-ink: #111827;
+  --color-ink-muted: #4b5563;
+  --color-ink-faint: #9ca3af;
+
+  /* brand */
+  --color-brand: #2563eb;
+  --color-brand-strong: #1d4ed8;
+  --color-brand-soft: #eff6ff;
+
+  /* score semantics */
+  --color-positive: #059669;
+  --color-negative: #dc2626;
+  --color-neutral: #6b7280;
+
+  --radius-card: 0.75rem;
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.08);
+}
 
 html,
 body,
@@ -10,7 +59,7 @@ body,
   width: 100%;
   margin: 0;
   padding: 0;
-  background-color: white;
+  background-color: var(--color-surface);
 }
 
 body {
@@ -29,38 +78,20 @@ body {
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(13, 13, 13, 0.87);
-  background-color: #ffffff;
+  /*
+   * Light only, deliberately. There was one `dark:` utility in the whole app
+   * and it was a no-op, while `color-scheme: light dark` told the browser to
+   * darken form controls and scrollbars against surfaces that are hardcoded
+   * white — which was a real, visible bug. Committing to light fixes it.
+   * The tokens above are the seam that makes real dark mode a one-file change
+   * later; this is a deferral, not a rejection.
+   */
+  color-scheme: light;
+  color: var(--color-ink);
+  background-color: var(--color-surface);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-
-a:hover {
-  color: #535bf2;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-
-  a:hover {
-    color: #747bff;
-  }
 }

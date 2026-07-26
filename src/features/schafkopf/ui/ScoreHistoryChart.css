@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@reference '@/shared/styles/index.css';
 
 .chart-container {
   @apply mt-8 px-4;

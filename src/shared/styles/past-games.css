@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@reference '@/shared/styles/index.css';
 
 .past-games-container {
   @apply flex flex-col min-h-screen bg-white text-black;

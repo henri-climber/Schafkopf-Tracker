@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@reference '@/shared/styles/index.css';
 
 .home-container {
   @apply min-h-screen flex flex-col items-center bg-gray-50 text-gray-900 font-sans;

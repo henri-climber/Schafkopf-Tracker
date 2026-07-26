@@ -1,4 +1,4 @@
-@reference "tailwindcss";
+@reference '@/shared/styles/index.css';
 
 .leaderboard-page {
   @apply min-h-screen bg-gray-50 text-gray-900 pb-24;
