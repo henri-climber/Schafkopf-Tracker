@@ -1,0 +1,141 @@
+@reference '@/shared/styles/index.css';
+
+.tt-match-content {
+  @apply max-w-3xl mx-auto p-4 flex flex-col gap-4;
+}
+
+/* Scoreboard: Team A vs Team B mit gewonnenen Saetzen */
+.tt-scoreboard {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-stretch gap-3;
+}
+
+.tt-score-team {
+  @apply flex-1 flex flex-col items-center justify-center text-center gap-2 rounded-xl p-3;
+}
+
+.tt-score-team.tt-side-a {
+  @apply bg-blue-50;
+}
+
+.tt-score-team.tt-side-b {
+  @apply bg-emerald-50;
+}
+
+.tt-score-team.tt-winner {
+  @apply ring-2 ring-offset-1;
+}
+
+.tt-side-a.tt-winner {
+  @apply ring-blue-500;
+}
+
+.tt-side-b.tt-winner {
+  @apply ring-emerald-500;
+}
+
+.tt-score-name {
+  @apply font-bold text-gray-800 leading-tight;
+}
+
+.tt-score-sets {
+  @apply text-4xl font-extrabold font-mono;
+}
+
+.tt-side-a .tt-score-sets {
+  @apply text-blue-600;
+}
+
+.tt-side-b .tt-score-sets {
+  @apply text-emerald-600;
+}
+
+.tt-score-vs {
+  @apply flex items-center justify-center text-sm font-bold text-gray-400 px-1;
+}
+
+.tt-winner-banner {
+  @apply text-center text-sm font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl py-2;
+}
+
+/* Saetze-Liste */
+.tt-sets-card {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden;
+}
+
+.tt-sets-header {
+  @apply px-5 py-3 border-b border-gray-100 bg-gray-50/60 font-semibold text-gray-700 text-sm flex items-center justify-between gap-2;
+}
+
+/* Best-of inline editierbar (waehrend des Spiels) */
+.tt-bestof {
+  @apply inline-flex items-center gap-1.5 shrink-0;
+}
+
+.tt-bestof-label {
+  @apply text-xs font-medium text-gray-400 uppercase tracking-wide;
+}
+
+.tt-bestof-btn {
+  @apply w-7 h-7 rounded-lg bg-white border border-gray-200 text-lg font-bold text-gray-600 leading-none
+         flex items-center justify-center transition-colors hover:bg-gray-100
+         disabled:opacity-40 disabled:cursor-not-allowed select-none;
+}
+
+.tt-bestof-value {
+  @apply min-w-6 text-center text-base font-mono font-bold text-gray-800;
+}
+
+.tt-sets-list {
+  @apply divide-y divide-gray-50;
+}
+
+.tt-set-row {
+  @apply flex items-center gap-3 px-5 py-3;
+}
+
+.tt-set-label {
+  @apply text-sm font-medium text-gray-500 w-16;
+}
+
+.tt-set-scores {
+  @apply flex-1 flex items-center justify-center gap-3;
+}
+
+.tt-set-input {
+  @apply w-16 text-center bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 text-lg font-mono
+         focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all
+         disabled:opacity-60 disabled:cursor-not-allowed;
+}
+
+.tt-set-input.tt-set-input-b {
+  @apply focus:ring-emerald-500;
+}
+
+.tt-set-colon {
+  @apply text-lg font-bold text-gray-400;
+}
+
+.tt-set-tag {
+  @apply w-6 text-center text-xs font-bold;
+}
+
+.tt-set-tag-a {
+  @apply text-blue-600;
+}
+
+.tt-set-tag-b {
+  @apply text-emerald-600;
+}
+
+.tt-set-delete {
+  @apply ml-2 p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0;
+}
+
+.tt-add-set-btn {
+  @apply w-full py-4 font-bold text-blue-600 hover:bg-blue-50 transition-colors
+         flex items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent;
+}
+
+.tt-sets-empty {
+  @apply text-center text-gray-400 py-8 text-sm;
+}

@@ -1,0 +1,75 @@
+@reference '@/shared/styles/index.css';
+
+.past-games-container {
+  @apply flex flex-col min-h-screen bg-white text-black;
+}
+
+.past-games-header {
+  @apply p-4 border-b flex items-center gap-3;
+}
+
+.past-games-back-btn {
+  @apply p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors;
+}
+
+.past-games-title {
+  @apply text-2xl font-bold;
+}
+
+.past-games-content {
+  @apply flex-1 p-4;
+}
+
+.past-games-list {
+  @apply max-w-md mx-auto space-y-3;
+}
+
+.past-game-card {
+  @apply w-full p-4 text-left rounded-lg hover:opacity-90 transition-opacity relative;
+  background-color: #1f1f1f;
+}
+
+.past-game-name {
+  @apply font-medium text-white;
+}
+
+.past-game-date {
+  @apply text-sm text-gray-400;
+}
+
+.past-game-badge {
+  @apply absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium;
+}
+
+.past-game-badge-excluded {
+  @apply bg-yellow-600 text-white;
+}
+
+.past-game-badge-included {
+  @apply bg-green-600 text-white;
+}
+
+/* Player Filter */
+.player-filter-bar {
+  @apply flex flex-wrap gap-2 mb-4 max-w-md mx-auto;
+}
+
+.player-filter-chip {
+  @apply px-3 py-1.5 rounded-full text-sm font-medium border border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:text-blue-600 transition-colors cursor-pointer;
+}
+
+.player-filter-chip.active {
+  @apply bg-blue-600 text-white border-blue-600;
+}
+
+.player-filter-clear {
+  @apply px-3 py-1.5 rounded-full text-sm font-medium text-gray-400 hover:text-red-500 transition-colors cursor-pointer;
+}
+
+.past-games-empty {
+  @apply text-center text-gray-600 py-8;
+}
+
+.past-games-empty-reset {
+  @apply mt-2 text-blue-600 font-medium hover:underline;
+}
