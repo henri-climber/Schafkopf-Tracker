@@ -13,6 +13,7 @@ import {
 } from '@/features/schafkopf/api/rounds'
 import { setTableFlags } from '@/features/schafkopf/api/tables'
 import { searchPlayers } from '@/features/players/api/players'
+import { useMediaQuery } from '@/shared/ui/useMediaQuery'
 import type { Player } from '@/shared/supabase/types'
 import '@/shared/styles/game-details.css'
 import { RoundTable } from './GameDetails/RoundTable'
@@ -28,6 +29,14 @@ export function GameDetailsPage() {
   const tableId = Number(id)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+
+  /**
+   * Matches the 820px breakpoint in game-details.css. The two score sheets are
+   * mutually exclusive views of the same state, so only one may be mounted:
+   * both render an autoFocus input for the cell being edited, and a hidden one
+   * still takes focus.
+   */
+  const isDesktop = useMediaQuery('(min-width: 821px)')
 
   const [isAddingPlayer, setIsAddingPlayer] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -73,6 +82,13 @@ export function GameDetailsPage() {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }, [rounds.length])
+
+  // Crossing the breakpoint swaps which sheet is mounted, and an unmounting
+  // input never fires blur. Close the editor rather than reopening it, focused,
+  // in the other view.
+  useEffect(() => {
+    setEditingCell(null)
+  }, [isDesktop])
 
   const rows: RoundRow[] = useMemo(
     () =>
@@ -273,28 +289,30 @@ export function GameDetailsPage() {
       </div>
 
       <div className="main-score-sheet">
-        <RoundTable
-          rows={rows}
-          players={players}
-          playerTotals={playerTotals}
-          editingCell={editingCell}
-          onEditCell={setEditingCell}
-          onScoreUpdate={handleScoreUpdate}
-          onAddRound={handleAddRound}
-        />
-
-        <RoundCardList
-          rows={rows}
-          players={players}
-          editingCell={editingCell}
-          onEditCell={setEditingCell}
-          onScoreUpdate={handleScoreUpdate}
-          onAddRound={handleAddRound}
-          expandedRoundId={expandedRoundId}
-          onToggleRound={setExpandedRoundId}
-          isOpen={!!gameTable?.is_open}
-          bottomRef={bottomRef}
-        />
+        {isDesktop ? (
+          <RoundTable
+            rows={rows}
+            players={players}
+            playerTotals={playerTotals}
+            editingCell={editingCell}
+            onEditCell={setEditingCell}
+            onScoreUpdate={handleScoreUpdate}
+            onAddRound={handleAddRound}
+          />
+        ) : (
+          <RoundCardList
+            rows={rows}
+            players={players}
+            editingCell={editingCell}
+            onEditCell={setEditingCell}
+            onScoreUpdate={handleScoreUpdate}
+            onAddRound={handleAddRound}
+            expandedRoundId={expandedRoundId}
+            onToggleRound={setExpandedRoundId}
+            isOpen={!!gameTable?.is_open}
+            bottomRef={bottomRef}
+          />
+        )}
       </div>
 
       {isAddingPlayer && (

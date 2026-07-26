@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import {
   LineChart,
   Line,
@@ -12,6 +12,7 @@ import {
 import '@/features/schafkopf/ui/ScoreHistoryChart.css'
 import type { Player as PlayerData } from '@/shared/supabase/types'
 import type { SeriesPoint } from '@/features/schafkopf/domain/scoring'
+import { useMediaQuery } from '@/shared/ui/useMediaQuery'
 
 interface PlayerScore {
   id: number
@@ -80,14 +81,7 @@ interface Props {
  * Now it receives the computed series and only shapes it for Recharts.
  */
 export function ScoreHistoryChart({ series, players: playerRows }: Props) {
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 800)
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 799px)')
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
+  const isMobile = useMediaQuery('(max-width: 799px)')
 
   const { chartData, players } = useMemo(() => {
     const playerScores: PlayerScore[] = playerRows.map((player, index) => ({
