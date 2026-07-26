@@ -8,20 +8,11 @@
 --
 -- Using max() rather than count() also means a table that already has a gap
 -- keeps counting from the top instead of colliding with an existing row.
---
--- Calls for the same table are serialized for the duration of their
--- transactions. Different tables use different advisory-lock keys and can
--- still add rounds concurrently.
 
 create or replace function public.add_round(p_table_id bigint)
 returns public."Rounds"
 language sql
-security invoker
 as $$
-  select pg_advisory_xact_lock(
-    hashtextextended('public.add_round:' || p_table_id::text, 0)
-  );
-
   insert into public."Rounds" (table_id, round_number)
   select p_table_id, coalesce(max(round_number), 0) + 1
   from public."Rounds"
