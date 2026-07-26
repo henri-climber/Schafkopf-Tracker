@@ -227,7 +227,7 @@
 /* ── Mobile Totals Bar ── */
 
 .mobile-totals-bar {
-  @apply bg-white border-b sticky top-[68px] z-10 flex flex-row justify-evenly px-2 py-2 shadow-sm;
+  @apply bg-white border-b sticky top-[53px] sm:top-[57px] z-10 flex flex-row justify-evenly px-2 py-2 shadow-sm;
 }
 
 .mobile-totals-item {

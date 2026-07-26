@@ -1,0 +1,155 @@
+@reference '@/shared/styles/index.css';
+
+.game-photo-picker {
+  @apply rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3;
+}
+
+.game-photo-picker-compact {
+  @apply p-3;
+}
+
+.game-photo-picker-heading {
+  @apply flex items-start justify-between gap-3;
+}
+
+.game-photo-picker-heading h3 {
+  @apply text-sm font-semibold text-gray-800;
+}
+
+.game-photo-picker-heading p {
+  @apply text-xs text-gray-500 mt-0.5;
+}
+
+.game-photo-clear {
+  @apply rounded-full p-1.5 text-gray-500 hover:bg-gray-200 hover:text-gray-800 disabled:opacity-50;
+}
+
+.game-photo-preview,
+.game-photo-placeholder {
+  @apply w-full h-36 rounded-lg border border-gray-200;
+}
+
+.game-photo-preview {
+  @apply object-cover bg-gray-100;
+}
+
+.game-photo-placeholder {
+  @apply flex flex-col items-center justify-center gap-2 text-sm text-gray-400 bg-white;
+}
+
+.game-photo-actions {
+  @apply grid grid-cols-2 gap-2;
+}
+
+.game-photo-action {
+  @apply min-h-10 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700
+         flex items-center justify-center gap-2 hover:bg-gray-100 disabled:cursor-wait disabled:opacity-50;
+}
+
+.game-photo-library-note {
+  @apply text-[11px] leading-relaxed text-gray-500;
+}
+
+.game-photo-error {
+  @apply text-xs font-medium text-red-600;
+}
+
+.game-photo-dialog-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4;
+}
+
+.game-photo-dialog {
+  @apply w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl;
+}
+
+.game-photo-dialog-header {
+  @apply flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4;
+}
+
+.game-photo-dialog-header h2 {
+  @apply text-lg font-bold text-gray-900;
+}
+
+.game-photo-dialog-header p {
+  @apply mt-1 text-sm text-gray-500;
+}
+
+.game-photo-dialog-close {
+  @apply rounded-full p-2 text-gray-500 hover:bg-gray-100;
+}
+
+.game-photo-dialog-body {
+  @apply p-5;
+}
+
+.game-photo-dialog-error {
+  @apply mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700;
+}
+
+.game-photo-dialog-footer {
+  @apply flex flex-wrap items-center justify-end gap-2 border-t border-gray-100 px-5 py-4;
+}
+
+.game-photo-dialog-footer .danger {
+  @apply mr-auto text-red-600 hover:bg-red-50;
+}
+
+.game-photo-dialog-button {
+  @apply rounded-lg px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-50;
+}
+
+.game-photo-dialog-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.game-photo-hero {
+  @apply relative max-w-4xl h-48 mx-auto overflow-hidden bg-gray-200 sm:h-56 sm:rounded-b-2xl;
+}
+
+.game-photo-hero img {
+  @apply h-full w-full object-cover;
+}
+
+.game-photo-hero-shade {
+  @apply absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent;
+}
+
+.game-photo-hero-copy {
+  @apply absolute inset-x-0 bottom-0 p-4 text-white sm:p-6;
+}
+
+.game-photo-hero-copy span {
+  @apply text-xs font-semibold uppercase tracking-wider text-white/80;
+}
+
+.game-photo-hero-copy p {
+  @apply mt-1 text-sm text-white/90;
+}
+
+.game-photo-gallery {
+  @apply max-w-4xl mx-auto grid grid-cols-2 gap-3 px-4 pt-4;
+}
+
+.game-photo-gallery-card {
+  @apply relative h-24 overflow-hidden rounded-xl border border-gray-200 bg-white text-left shadow-sm
+         hover:border-blue-300 hover:shadow-md focus:outline-hidden focus:ring-2 focus:ring-blue-500/30;
+}
+
+.game-photo-gallery-card img {
+  @apply h-full w-full object-cover;
+}
+
+.game-photo-gallery-empty {
+  @apply flex h-full flex-col items-center justify-center gap-1 text-gray-400;
+}
+
+.game-photo-gallery-label {
+  @apply absolute inset-x-0 bottom-0 bg-linear-to-t from-black/75 to-transparent px-3 pb-2 pt-6
+         text-xs font-semibold text-white;
+}
+
+@media (max-width: 640px) {
+  .game-photo-hero {
+    height: 10rem;
+  }
+}

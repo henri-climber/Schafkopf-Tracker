@@ -130,6 +130,8 @@ export type Database = {
       }
       Tables: {
         Row: {
+          after_photo_path: string | null
+          before_photo_path: string | null
           created_at: string
           exclude_from_overall: boolean
           id: number
@@ -137,6 +139,8 @@ export type Database = {
           name: string
         }
         Insert: {
+          after_photo_path?: string | null
+          before_photo_path?: string | null
           created_at?: string
           exclude_from_overall?: boolean
           id?: number
@@ -144,6 +148,8 @@ export type Database = {
           name?: string
         }
         Update: {
+          after_photo_path?: string | null
+          before_photo_path?: string | null
           created_at?: string
           exclude_from_overall?: boolean
           id?: number
