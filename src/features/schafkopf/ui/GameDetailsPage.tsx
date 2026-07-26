@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { LockOpenIcon, LockClosedIcon } from '@heroicons/react/24/outline'
+import { LockOpenIcon, LockClosedIcon, ChartBarIcon, UserPlusIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useTableRealtime } from '@/features/schafkopf/api/useTableRealtime'
 import { schafkopfKeys } from '@/features/schafkopf/api/queries'
 import {
@@ -233,33 +233,37 @@ export function GameDetailsPage() {
         <div className="nav-right">
           <button
             onClick={handleToggleIsOpen}
-            title={gameTable?.is_open ? 'Open' : 'Closed'}
+            title={
+              gameTable?.is_open
+                ? 'Game is open for editing (click to lock)'
+                : 'Game is locked (click to reopen)'
+            }
             className={`status-button ${
               gameTable?.is_open ? 'status-button-open' : 'status-button-closed'
             }`}
           >
-            <span className="status-icon-mobile">
-              {gameTable?.is_open ? (
-                <LockOpenIcon className="w-5 h-5" />
-              ) : (
-                <LockClosedIcon className="w-5 h-5" />
-              )}
-            </span>
-            <span className="status-label-desktop">{gameTable?.is_open ? 'Open' : 'Closed'}</span>
+            {gameTable?.is_open ? (
+              <LockOpenIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            ) : (
+              <LockClosedIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            )}
+            <span className="hidden sm:inline">{gameTable?.is_open ? 'Open' : 'Closed'}</span>
           </button>
 
           <button
             onClick={handleToggleExcludeFromOverall}
-            title={gameTable?.exclude_from_overall ? 'Excluded' : 'Included'}
+            title={
+              gameTable?.exclude_from_overall
+                ? 'Excluded from overall stats (click to include)'
+                : 'Included in overall stats (click to exclude)'
+            }
             className={`status-button ${
               gameTable?.exclude_from_overall ? 'status-button-excluded' : 'status-button-included'
             }`}
           >
-            <span className="status-icon-mobile">
-              {gameTable?.exclude_from_overall ? '✕' : '✓'}
-            </span>
-            <span className="status-label-desktop">
-              {gameTable?.exclude_from_overall ? 'Excluded' : 'Included'}
+            <ChartBarIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            <span className="hidden sm:inline">
+              {gameTable?.exclude_from_overall ? 'Excluded' : 'In Stats'}
             </span>
           </button>
 
@@ -269,14 +273,17 @@ export function GameDetailsPage() {
               runSearch('')
             }}
             className="btn-add-player-nav"
+            title="Add player to game"
           >
-            <span className="min-[640px]:hidden">+P</span>
+            <UserPlusIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 text-gray-600" />
             <span className="hidden min-[640px]:inline">Add Player</span>
+            <span className="hidden min-[480px]:inline min-[640px]:hidden">Player</span>
           </button>
 
           {gameTable?.is_open && (
-            <button onClick={handleAddRound} className="btn-add-round">
-              <span className="text-xl leading-none">+</span> Round
+            <button onClick={handleAddRound} className="btn-add-round" title="Add round">
+              <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <span>Round</span>
             </button>
           )}
         </div>
