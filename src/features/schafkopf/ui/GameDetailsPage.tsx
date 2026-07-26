@@ -46,6 +46,7 @@ export function GameDetailsPage() {
   const [expandedRoundId, setExpandedRoundId] = useState<number | null>(null)
 
   const bottomRef = useRef<HTMLDivElement>(null)
+  const addingRound = useRef(false)
 
   const detailQuery = useQuery({
     queryKey: schafkopfKeys.table(tableId),
@@ -124,18 +125,21 @@ export function GameDetailsPage() {
   )
 
   const handleAddRound = useCallback(async () => {
+    // Six rounds once landed on one table within 116ms because every tap read
+    // the same not-yet-updated state. The database now assigns the number, but
+    // there is still no reason to let one tap become six rounds.
+    if (addingRound.current) return
+    addingRound.current = true
     try {
-      const round = await addRound({
-        tableId,
-        roundNumber: rounds.length + 1,
-        playerIds: players.map((p) => p.id),
-      })
+      const round = await addRound({ tableId, playerIds: players.map((p) => p.id) })
       await refreshRounds()
       setExpandedRoundId(round.id)
     } catch (err) {
       console.error('Error adding round:', err)
+    } finally {
+      addingRound.current = false
     }
-  }, [tableId, rounds.length, players, refreshRounds])
+  }, [tableId, players, refreshRounds])
 
   const handleToggleIsOpen = async () => {
     if (!gameTable) return

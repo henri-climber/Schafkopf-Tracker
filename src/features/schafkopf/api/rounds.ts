@@ -56,16 +56,18 @@ export async function listRounds(tableId: number): Promise<RoundsAndScores> {
   }
 }
 
-export async function addRound(input: {
-  tableId: number
-  roundNumber: number
-  playerIds: number[]
-}): Promise<Round> {
-  const { data: round, error } = await supabase
-    .from('Rounds')
-    .insert({ table_id: input.tableId, round_number: input.roundNumber })
-    .select()
-    .single()
+/**
+ * Adds the next round to a table.
+ *
+ * The round number is chosen by the database, not here. Passing a client-side
+ * `rounds.length + 1` is what produced duplicate rounds: a device that had
+ * missed someone else's round, or that fired two taps before its own state
+ * updated, claimed a number that already existed. A unique constraint on
+ * (table_id, round_number) now backs this up.
+ */
+export async function addRound(input: { tableId: number; playerIds: number[] }): Promise<Round> {
+  // Returns the row itself, not a set — no .single() needed.
+  const { data: round, error } = await supabase.rpc('add_round', { p_table_id: input.tableId })
   if (error) throw error
 
   if (input.playerIds.length > 0) {

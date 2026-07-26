@@ -255,7 +255,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_round: {
+        Args: { p_table_id: number }
+        Returns: {
+          created_at: string
+          id: number
+          round_number: number
+          table_id: number
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'Rounds'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never

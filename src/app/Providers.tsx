@@ -10,10 +10,17 @@ export function Providers({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Scores are edited by a handful of people in the same room, and
-            // the score sheet has its own realtime subscription, so refetching
-            // on every window focus is noise.
-            refetchOnWindowFocus: false,
+            /*
+             * Refetch on focus, deliberately.
+             *
+             * This was briefly disabled on the argument that the score sheet
+             * has its own realtime subscription. That argument was wrong: a
+             * phone that sleeps drops its websocket, and on unlock the device
+             * was still showing a stale round list. Focus is exactly the moment
+             * that needs correcting, and staleTime keeps it from being chatty.
+             */
+            refetchOnWindowFocus: true,
+            refetchOnReconnect: true,
             retry: 1,
           },
         },
