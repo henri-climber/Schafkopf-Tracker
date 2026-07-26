@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { LockOpenIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 import { useTableRealtime } from '@/features/schafkopf/api/useTableRealtime'
 import { schafkopfKeys } from '@/features/schafkopf/api/queries'
 import {
@@ -11,28 +12,14 @@ import {
   upsertScore,
 } from '@/features/schafkopf/api/rounds'
 import { setTableFlags } from '@/features/schafkopf/api/tables'
-import { searchPlayers as searchPlayersApi } from '@/features/players/api/players'
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table'
-import { LockOpenIcon, LockClosedIcon } from '@heroicons/react/24/outline'
+import { searchPlayers } from '@/features/players/api/players'
+import type { Player } from '@/shared/supabase/types'
 import '@/shared/styles/game-details.css'
-import type { GameTable, Player, Round, RoundScore } from '@/shared/supabase/types'
-import { roundSum } from '@/features/schafkopf/domain/scoring'
-
-interface AvailablePlayer extends Player {
-  isSelected?: boolean
-}
-
-// Data shape for the table row
-interface RoundRow {
-  roundNumber: number
-  roundId: number
-  scores: { [playerId: number]: number }
-}
+import { RoundTable } from './GameDetails/RoundTable'
+import { RoundCardList } from './GameDetails/RoundCardList'
+import { AddPlayerDialog } from './GameDetails/AddPlayerDialog'
+import { PlayerTotal } from './GameDetails/PlayerTotal'
+import type { EditingCell, RoundRow } from './GameDetails/types'
 
 export function GameDetailsPage() {
   const { id } = useParams<{ id: string }>()
@@ -42,17 +29,14 @@ export function GameDetailsPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  // UI States
   const [isAddingPlayer, setIsAddingPlayer] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [availablePlayers, setAvailablePlayers] = useState<AvailablePlayer[]>([])
+  const [candidates, setCandidates] = useState<Player[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
-  const [editingCell, setEditingCell] = useState<{ roundId: number; playerId: number } | null>(null)
+  const [editingCell, setEditingCell] = useState<EditingCell | null>(null)
   const [expandedRoundId, setExpandedRoundId] = useState<number | null>(null)
 
-  // Scroll to bottom ref
   const bottomRef = useRef<HTMLDivElement>(null)
-  const isTabNavigating = useRef(false)
 
   const detailQuery = useQuery({
     queryKey: schafkopfKeys.table(tableId),
@@ -67,13 +51,10 @@ export function GameDetailsPage() {
 
   useTableRealtime(tableId)
 
-  const gameTable: GameTable | null = detailQuery.data?.table ?? null
-  const players: Player[] = useMemo(() => detailQuery.data?.players ?? [], [detailQuery.data])
-  const rounds: Round[] = useMemo(() => roundsQuery.data?.rounds ?? [], [roundsQuery.data])
-  const roundScores: RoundScore[] = useMemo(
-    () => roundsQuery.data?.scores ?? [],
-    [roundsQuery.data],
-  )
+  const gameTable = detailQuery.data?.table ?? null
+  const players = useMemo(() => detailQuery.data?.players ?? [], [detailQuery.data])
+  const rounds = useMemo(() => roundsQuery.data?.rounds ?? [], [roundsQuery.data])
+  const roundScores = useMemo(() => roundsQuery.data?.scores ?? [], [roundsQuery.data])
   const loading = detailQuery.isPending || roundsQuery.isPending
   const error = detailQuery.error ?? roundsQuery.error
 
@@ -93,189 +74,52 @@ export function GameDetailsPage() {
     }
   }, [rounds.length])
 
-  // Transform data for the table
-  const tableData = useMemo(() => {
-    return rounds.map((round) => {
-      const row: RoundRow = {
-        roundNumber: round.round_number,
-        roundId: round.id,
-        scores: {},
-      }
+  const rows: RoundRow[] = useMemo(
+    () =>
+      rounds.map((round) => {
+        const row: RoundRow = { roundNumber: round.round_number, roundId: round.id, scores: {} }
+        for (const score of roundScores) {
+          if (score.round_id === round.id) row.scores[score.player_id] = score.raw_score
+        }
+        return row
+      }),
+    [rounds, roundScores],
+  )
 
-      roundScores
-        .filter((rs) => rs.round_id === round.id)
-        .forEach((rs) => {
-          row.scores[rs.player_id] = rs.raw_score
-        })
-
-      return row
-    })
-  }, [rounds, roundScores])
-
-  // Calculate totals
   const playerTotals = useMemo(() => {
-    const totals: { [key: number]: number } = {}
-    players.forEach((p) => (totals[p.id] = 0))
-
-    roundScores.forEach((rs) => {
-      if (totals[rs.player_id] !== undefined) {
-        totals[rs.player_id] += rs.raw_score
-      }
+    const totals: Record<number, number> = {}
+    players.forEach((player) => (totals[player.id] = 0))
+    roundScores.forEach((score) => {
+      if (totals[score.player_id] !== undefined) totals[score.player_id] += score.raw_score
     })
     return totals
   }, [players, roundScores])
 
-  // Columns definition
-  const columnHelper = createColumnHelper<RoundRow>()
+  const handleScoreUpdate = useCallback(
+    async (roundId: number, playerId: number, newScore: number) => {
+      try {
+        await upsertScore(roundId, playerId, newScore)
+        await refreshRounds()
+      } catch (err) {
+        console.error('Error updating score:', err)
+      }
+    },
+    [refreshRounds],
+  )
 
-  const columns = useMemo(() => {
-    const roundNumberColumn = columnHelper.accessor('roundNumber', {
-      header: '#',
-      cell: (info) => {
-        const sum = roundSum(info.row.original.scores)
-        const isInvalid = sum !== 0
-        return (
-          <div className="round-number-cell">
-            <span className={`round-number-text ${isInvalid ? 'round-number-invalid' : ''}`}>
-              {info.getValue()}
-            </span>
-            {isInvalid && (
-              <span title={`Sum is ${sum} (should be 0)`} className="round-error-icon">
-                !
-              </span>
-            )}
-          </div>
-        )
-      },
-      size: 50,
-    })
-
-    const playerColumns = players.map((player) =>
-      columnHelper.accessor((row) => row.scores[player.id], {
-        id: `player_${player.id}`,
-        header: () => (
-          <div className="player-header">
-            <span className="player-name">{player.name}</span>
-            <span
-              className={`player-total-badge ${
-                playerTotals[player.id] > 0
-                  ? 'total-positive'
-                  : playerTotals[player.id] < 0
-                    ? 'total-negative'
-                    : 'total-neutral'
-              }`}
-            >
-              {playerTotals[player.id] > 0 ? '+' : ''}
-              {playerTotals[player.id]}
-            </span>
-          </div>
-        ),
-        cell: (info) => {
-          const score = info.getValue() ?? 0
-          const isEditing =
-            editingCell?.roundId === info.row.original.roundId &&
-            editingCell?.playerId === player.id
-
-          return (
-            <div
-              className="score-cell"
-              onClick={() =>
-                setEditingCell({ roundId: info.row.original.roundId, playerId: player.id })
-              }
-            >
-              {isEditing ? (
-                <input
-                  type="number"
-                  defaultValue={score === 0 ? '' : score}
-                  className="score-input"
-                  autoFocus
-                  onFocus={(e) => e.target.select()}
-                  onBlur={(e) => {
-                    if (isTabNavigating.current) {
-                      isTabNavigating.current = false
-                      return
-                    }
-                    const val = calculateScoreInput(e.target.value)
-                    handleScoreUpdate(info.row.original.roundId, player.id, val)
-                    setEditingCell(null)
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const val = calculateScoreInput((e.target as HTMLInputElement).value)
-                      handleScoreUpdate(info.row.original.roundId, player.id, val)
-                      setEditingCell(null)
-                    } else if (e.key === 'Tab') {
-                      e.preventDefault()
-                      const val = calculateScoreInput((e.target as HTMLInputElement).value)
-                      handleScoreUpdate(info.row.original.roundId, player.id, val)
-                      const currentIndex = players.findIndex((p) => p.id === player.id)
-                      const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1
-                      if (nextIndex >= 0 && nextIndex < players.length) {
-                        isTabNavigating.current = true
-                        setEditingCell({
-                          roundId: info.row.original.roundId,
-                          playerId: players[nextIndex].id,
-                        })
-                      } else {
-                        setEditingCell(null)
-                      }
-                    }
-                  }}
-                />
-              ) : (
-                <span
-                  className={`score-display ${
-                    score > 0 ? 'score-positive' : score < 0 ? 'score-negative' : 'score-zero'
-                  }`}
-                >
-                  {score === 0 ? '-' : score > 0 ? `+${score}` : score}
-                </span>
-              )}
-            </div>
-          )
-        },
-      }),
-    )
-
-    return [roundNumberColumn, ...playerColumns]
-  }, [players, playerTotals, editingCell, columnHelper])
-
-  const table = useReactTable({
-    data: tableData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  })
-
-  const calculateScoreInput = (val: string): number => {
-    if (!val) return 0
-    return parseInt(val) || 0
-  }
-
-  const handleScoreUpdate = async (roundId: number, playerId: number, newScore: number) => {
+  const handleAddRound = useCallback(async () => {
     try {
-      await upsertScore(roundId, playerId, newScore)
-      // Previously this refetched every score on the table after each keystroke.
-      // Invalidating lets the cache decide, and realtime already covers the
-      // other devices.
-      await refreshRounds()
-    } catch (err) {
-      console.error('Error updating score:', err)
-    }
-  }
-
-  const handleAddRound = async () => {
-    try {
-      const newRound = await addRound({
+      const round = await addRound({
         tableId,
         roundNumber: rounds.length + 1,
         playerIds: players.map((p) => p.id),
       })
       await refreshRounds()
-      setExpandedRoundId(newRound.id)
+      setExpandedRoundId(round.id)
     } catch (err) {
       console.error('Error adding round:', err)
     }
-  }
+  }, [tableId, rounds.length, players, refreshRounds])
 
   const handleToggleIsOpen = async () => {
     if (!gameTable) return
@@ -312,13 +156,13 @@ export function GameDetailsPage() {
     }
   }
 
-  const searchPlayers = async (search: string) => {
+  const runSearch = async (term: string) => {
     setSearchLoading(true)
     try {
-      const found = await searchPlayersApi(search)
-      setAvailablePlayers(found.filter((p) => !players.find((x) => x.id === p.id)))
-    } catch (e) {
-      console.error('Error searching players:', e)
+      const found = await searchPlayers(term)
+      setCandidates(found.filter((p) => !players.some((existing) => existing.id === p.id)))
+    } catch (err) {
+      console.error('Error searching players:', err)
     } finally {
       setSearchLoading(false)
     }
@@ -340,7 +184,6 @@ export function GameDetailsPage() {
 
   return (
     <div className="game-details-container">
-      {/* Navbar / Header */}
       <div className="game-navbar">
         <div className="nav-left">
           <button onClick={() => navigate('/')} className="nav-back-button">
@@ -403,7 +246,7 @@ export function GameDetailsPage() {
           <button
             onClick={() => {
               setIsAddingPlayer(true)
-              searchPlayers('')
+              runSearch('')
             }}
             className="btn-add-player-nav"
           >
@@ -424,231 +267,48 @@ export function GameDetailsPage() {
         {players.map((player) => (
           <div key={player.id} className="mobile-totals-item">
             <span className="mobile-totals-name">{player.name}</span>
-            <span
-              className={`mobile-totals-score ${
-                playerTotals[player.id] > 0
-                  ? 'total-positive'
-                  : playerTotals[player.id] < 0
-                    ? 'total-negative'
-                    : 'total-neutral'
-              }`}
-            >
-              {playerTotals[player.id] > 0 ? '+' : ''}
-              {playerTotals[player.id]}
-            </span>
+            <PlayerTotal total={playerTotals[player.id]} className="mobile-totals-score" />
           </div>
         ))}
       </div>
 
-      {/* Main Score Sheet */}
       <div className="main-score-sheet">
-        {/* Desktop: Tabelle */}
-        <div className="score-table-container">
-          <div className="score-table-wrapper">
-            <table className="score-table">
-              <thead className="table-header">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <th key={header.id} className="table-th">
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody className="table-body">
-                {table.getRowModel().rows.map((row) => {
-                  const sum = roundSum(row.original.scores)
-                  const isInvalid = sum !== 0
-                  return (
-                    <tr
-                      key={row.id}
-                      className={`table-row ${isInvalid ? 'table-row-invalid' : ''}`}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className="table-td">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      ))}
-                    </tr>
-                  )
-                })}
-                <tr></tr>
-              </tbody>
-            </table>
-          </div>
+        <RoundTable
+          rows={rows}
+          players={players}
+          playerTotals={playerTotals}
+          editingCell={editingCell}
+          onEditCell={setEditingCell}
+          onScoreUpdate={handleScoreUpdate}
+          onAddRound={handleAddRound}
+        />
 
-          {rounds.length === 0 && (
-            <div className="empty-state">
-              <p>No rounds played yet.</p>
-              <button onClick={handleAddRound} className="empty-state-btn">
-                Start the game
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Mobile: Card View */}
-        <div className="card-view-container">
-          {rounds.length === 0 ? (
-            <div className="empty-state">
-              <p>No rounds played yet.</p>
-              <button onClick={handleAddRound} className="empty-state-btn">
-                Start the game
-              </button>
-            </div>
-          ) : (
-            tableData.map((row) => {
-              const sum = roundSum(row.scores)
-              const isInvalid = sum !== 0
-              const isExpanded = expandedRoundId === row.roundId
-              return (
-                <div
-                  key={row.roundId}
-                  className={`round-card ${isInvalid ? 'round-card-invalid' : ''}`}
-                >
-                  <div
-                    className="round-card-header"
-                    onClick={() => setExpandedRoundId(isExpanded ? null : row.roundId)}
-                  >
-                    <span
-                      className={`round-card-number ${isInvalid ? 'round-number-invalid' : ''}`}
-                    >
-                      Runde {row.roundNumber}
-                    </span>
-                    <div className="round-card-header-right">
-                      {isInvalid && (
-                        <span className="round-error-icon" title={`Sum is ${sum} (should be 0)`}>
-                          !
-                        </span>
-                      )}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className={`round-card-chevron ${isExpanded ? 'round-card-chevron-open' : ''}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className={`round-card-body ${isExpanded ? 'round-card-body-open' : ''}`}>
-                    <div className="round-card-scores">
-                      {players.map((player) => {
-                        const score = row.scores[player.id] ?? 0
-                        const isEditing =
-                          editingCell?.roundId === row.roundId &&
-                          editingCell?.playerId === player.id
-                        return (
-                          <div key={player.id} className="round-card-score-row">
-                            <span className="round-card-player-name">{player.name}</span>
-                            <div
-                              className="score-cell"
-                              onClick={() =>
-                                setEditingCell({ roundId: row.roundId, playerId: player.id })
-                              }
-                            >
-                              {isEditing ? (
-                                <input
-                                  type="number"
-                                  defaultValue={score === 0 ? '' : score}
-                                  className="score-input"
-                                  autoFocus
-                                  onFocus={(e) => e.target.select()}
-                                  onBlur={(e) => {
-                                    const val = calculateScoreInput(e.target.value)
-                                    handleScoreUpdate(row.roundId, player.id, val)
-                                    setEditingCell(null)
-                                  }}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      const val = calculateScoreInput(
-                                        (e.target as HTMLInputElement).value,
-                                      )
-                                      handleScoreUpdate(row.roundId, player.id, val)
-                                      setEditingCell(null)
-                                    }
-                                  }}
-                                />
-                              ) : (
-                                <span
-                                  className={`score-display ${
-                                    score > 0
-                                      ? 'score-positive'
-                                      : score < 0
-                                        ? 'score-negative'
-                                        : 'score-zero'
-                                  }`}
-                                >
-                                  {score === 0 ? '-' : score > 0 ? `+${score}` : score}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )
-            })
-          )}
-          {gameTable?.is_open && (
-            <button onClick={handleAddRound} className="btn-add-round-mobile">
-              <span className="text-2xl leading-none">+</span>
-            </button>
-          )}
-          <div ref={bottomRef} />
-        </div>
+        <RoundCardList
+          rows={rows}
+          players={players}
+          editingCell={editingCell}
+          onEditCell={setEditingCell}
+          onScoreUpdate={handleScoreUpdate}
+          onAddRound={handleAddRound}
+          expandedRoundId={expandedRoundId}
+          onToggleRound={setExpandedRoundId}
+          isOpen={!!gameTable?.is_open}
+          bottomRef={bottomRef}
+        />
       </div>
 
-      {/* Add Player Modal */}
       {isAddingPlayer && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2 className="modal-title">Add Player</h2>
-            <input
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value)
-                searchPlayers(e.target.value)
-              }}
-              placeholder="Search player name..."
-              className="modal-search-input"
-              autoFocus
-            />
-            {searchLoading ? (
-              <p className="modal-loading">Loading...</p>
-            ) : (
-              <div className="modal-list-container">
-                {availablePlayers.length === 0 && searchTerm && (
-                  <p className="modal-empty-search">No players found</p>
-                )}
-                {availablePlayers.map((player) => (
-                  <button
-                    key={player.id}
-                    onClick={() => handleAddPlayerToGame(player.id)}
-                    className="modal-player-btn"
-                  >
-                    {player.name}
-                  </button>
-                ))}
-              </div>
-            )}
-            <div className="modal-footer">
-              <button onClick={() => setIsAddingPlayer(false)} className="modal-cancel-btn">
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <AddPlayerDialog
+          searchTerm={searchTerm}
+          onSearchTermChange={(term) => {
+            setSearchTerm(term)
+            runSearch(term)
+          }}
+          candidates={candidates}
+          loading={searchLoading}
+          onSelect={handleAddPlayerToGame}
+          onCancel={() => setIsAddingPlayer(false)}
+        />
       )}
     </div>
   )
