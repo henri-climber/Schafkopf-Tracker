@@ -1,8 +1,3 @@
--- Add optional before/after photos without changing the app's public access model.
-alter table public."Tables"
-  add column before_photo_path text,
-  add column after_photo_path text;
-
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'game-photos',
@@ -17,6 +12,9 @@ set
   public = excluded.public,
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Anonymous users can upload game photos" on storage.objects;
+drop policy if exists "Anonymous users can delete game photos" on storage.objects;
 
 create policy "Anonymous users can upload game photos"
 on storage.objects
