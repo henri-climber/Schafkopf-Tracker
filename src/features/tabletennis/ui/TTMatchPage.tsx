@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router'
 import { supabase } from '@/shared/supabase/client'
 import type { TTMatch, TTSet, TTSide, Player as PlayerRow } from '@/shared/supabase/types'
 import { matchWinner, setsWon, setsNeeded, isSetDecided } from '@/features/tabletennis/domain/tt'
-import { LockOpenIcon, LockClosedIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { LockOpenIcon, LockClosedIcon, PlusIcon, TrashIcon, ChartBarIcon } from '@heroicons/react/24/outline'
 import '@/shared/styles/game-details.css'
 import '@/features/tabletennis/ui/TTMatchPage.css'
 
@@ -246,24 +246,26 @@ export function TTMatchPage() {
             }
             className={`status-button ${match.is_open ? 'status-button-open' : 'status-button-closed'} disabled:opacity-40 disabled:cursor-not-allowed`}
           >
-            <span className="status-icon-mobile">
-              {match.is_open ? (
-                <LockOpenIcon className="w-5 h-5" />
-              ) : (
-                <LockClosedIcon className="w-5 h-5" />
-              )}
-            </span>
-            <span className="status-label-desktop">{match.is_open ? 'Open' : 'Closed'}</span>
+            {match.is_open ? (
+              <LockOpenIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            ) : (
+              <LockClosedIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            )}
+            <span className="hidden sm:inline">{match.is_open ? 'Open' : 'Closed'}</span>
           </button>
 
           <button
             onClick={handleToggleExclude}
-            title={match.exclude_from_overall ? 'Excluded' : 'Included'}
+            title={
+              match.exclude_from_overall
+                ? 'Excluded from overall stats (click to include)'
+                : 'Included in overall stats (click to exclude)'
+            }
             className={`status-button ${match.exclude_from_overall ? 'status-button-excluded' : 'status-button-included'}`}
           >
-            <span className="status-icon-mobile">{match.exclude_from_overall ? '✕' : '✓'}</span>
-            <span className="status-label-desktop">
-              {match.exclude_from_overall ? 'Excluded' : 'Included'}
+            <ChartBarIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            <span className="hidden sm:inline">
+              {match.exclude_from_overall ? 'Excluded' : 'In Stats'}
             </span>
           </button>
         </div>

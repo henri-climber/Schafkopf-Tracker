@@ -1,7 +1,14 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { LockOpenIcon, LockClosedIcon } from '@heroicons/react/24/outline'
+import {
+  LockOpenIcon,
+  LockClosedIcon,
+  ChartBarIcon,
+  UserPlusIcon,
+  PlusIcon,
+  PhotoIcon,
+} from '@heroicons/react/24/outline'
 import { useTableRealtime } from '@/features/schafkopf/api/useTableRealtime'
 import { schafkopfKeys } from '@/features/schafkopf/api/queries'
 import {
@@ -12,6 +19,13 @@ import {
   upsertScore,
 } from '@/features/schafkopf/api/rounds'
 import { setTableFlags } from '@/features/schafkopf/api/tables'
+import {
+  closeGameWithPhoto,
+  getGamePhotoUrl,
+  removeGamePhoto,
+  replaceGamePhoto,
+  type GamePhotoSlot,
+} from '@/features/schafkopf/api/gamePhotos'
 import { searchPlayers } from '@/features/players/api/players'
 import { useMediaQuery } from '@/shared/ui/useMediaQuery'
 import type { Player } from '@/shared/supabase/types'
@@ -20,6 +34,7 @@ import { RoundTable } from './GameDetails/RoundTable'
 import { RoundCardList } from './GameDetails/RoundCardList'
 import { AddPlayerDialog } from './GameDetails/AddPlayerDialog'
 import { PlayerTotal } from './GameDetails/PlayerTotal'
+import { GamePhotoDialog } from './GamePhotoDialog'
 import type { EditingCell, RoundRow } from './GameDetails/types'
 
 export function GameDetailsPage() {
@@ -44,6 +59,12 @@ export function GameDetailsPage() {
   const [searchLoading, setSearchLoading] = useState(false)
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null)
   const [expandedRoundId, setExpandedRoundId] = useState<number | null>(null)
+  const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false)
+  const [closingPhoto, setClosingPhoto] = useState<File | null>(null)
+  const [editingPhotoSlot, setEditingPhotoSlot] = useState<GamePhotoSlot | null>(null)
+  const [editingPhoto, setEditingPhoto] = useState<File | null>(null)
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const [photoError, setPhotoError] = useState<string | null>(null)
 
   const bottomRef = useRef<HTMLDivElement>(null)
   const addingRound = useRef(false)
@@ -143,11 +164,92 @@ export function GameDetailsPage() {
 
   const handleToggleIsOpen = async () => {
     if (!gameTable) return
+    if (gameTable.is_open) {
+      setPhotoError(null)
+      setClosingPhoto(null)
+      setIsCloseDialogOpen(true)
+      return
+    }
     try {
-      await setTableFlags(tableId, { is_open: !gameTable.is_open })
+      await setTableFlags(tableId, { is_open: true })
       await refreshTable()
     } catch (err) {
       console.error('Error toggling is_open:', err)
+    }
+  }
+
+  const handleCloseGame = async (includeSelectedPhoto: boolean) => {
+    if (!gameTable) return
+    setPhotoBusy(true)
+    setPhotoError(null)
+    try {
+      if (includeSelectedPhoto && closingPhoto) {
+        await closeGameWithPhoto({
+          tableId,
+          photo: closingPhoto,
+          previousPath: gameTable.after_photo_path,
+        })
+      } else {
+        await setTableFlags(tableId, { is_open: false })
+      }
+      await refreshTable()
+      setClosingPhoto(null)
+      setIsCloseDialogOpen(false)
+    } catch (closeError) {
+      console.error('Error closing game:', closeError)
+      setPhotoError('The game could not be closed. Please try again.')
+    } finally {
+      setPhotoBusy(false)
+    }
+  }
+
+  const openPhotoEditor = (slot: GamePhotoSlot) => {
+    setEditingPhoto(null)
+    setPhotoError(null)
+    setEditingPhotoSlot(slot)
+  }
+
+  const handleSavePhoto = async () => {
+    if (!gameTable || !editingPhotoSlot || !editingPhoto) return
+    const previousPath =
+      editingPhotoSlot === 'before' ? gameTable.before_photo_path : gameTable.after_photo_path
+    setPhotoBusy(true)
+    setPhotoError(null)
+    try {
+      await replaceGamePhoto({
+        tableId,
+        slot: editingPhotoSlot,
+        photo: editingPhoto,
+        previousPath,
+      })
+      await refreshTable()
+      setEditingPhoto(null)
+      setEditingPhotoSlot(null)
+    } catch (saveError) {
+      console.error('Error saving game photo:', saveError)
+      setPhotoError('The photo could not be saved. Please try again.')
+    } finally {
+      setPhotoBusy(false)
+    }
+  }
+
+  const handleRemovePhoto = async () => {
+    if (!gameTable || !editingPhotoSlot) return
+    const path =
+      editingPhotoSlot === 'before' ? gameTable.before_photo_path : gameTable.after_photo_path
+    if (!path) return
+    setPhotoBusy(true)
+    setPhotoError(null)
+    try {
+      await removeGamePhoto(tableId, editingPhotoSlot, path)
+      await refreshTable()
+      setEditingPhoto(null)
+      setEditingPhotoSlot(null)
+    } catch (removeError) {
+      console.error('Error removing game photo:', removeError)
+      setPhotoError('The photo could not be removed. Please try again.')
+    } finally {
+      setPhotoBusy(false)
     }
   }
 
@@ -202,6 +304,30 @@ export function GameDetailsPage() {
       </div>
     )
 
+  const beforePhotoUrl = getGamePhotoUrl(gameTable?.before_photo_path ?? null)
+  const afterPhotoUrl = getGamePhotoUrl(gameTable?.after_photo_path ?? null)
+  const heroPhotoSlot: GamePhotoSlot | null =
+    !gameTable?.is_open && afterPhotoUrl
+      ? 'after'
+      : beforePhotoUrl
+        ? 'before'
+        : afterPhotoUrl
+          ? 'after'
+          : null
+  const heroPhotoUrl = heroPhotoSlot === 'after' ? afterPhotoUrl : beforePhotoUrl
+  const editingPhotoPath =
+    editingPhotoSlot === 'before'
+      ? gameTable?.before_photo_path
+      : editingPhotoSlot === 'after'
+        ? gameTable?.after_photo_path
+        : null
+  const editingPhotoUrl =
+    editingPhotoSlot === 'before'
+      ? beforePhotoUrl
+      : editingPhotoSlot === 'after'
+        ? afterPhotoUrl
+        : null
+
   return (
     <div className="game-details-container">
       <div className="game-navbar">
@@ -233,33 +359,37 @@ export function GameDetailsPage() {
         <div className="nav-right">
           <button
             onClick={handleToggleIsOpen}
-            title={gameTable?.is_open ? 'Open' : 'Closed'}
+            title={
+              gameTable?.is_open
+                ? 'Game is open for editing (click to lock)'
+                : 'Game is locked (click to reopen)'
+            }
             className={`status-button ${
               gameTable?.is_open ? 'status-button-open' : 'status-button-closed'
             }`}
           >
-            <span className="status-icon-mobile">
-              {gameTable?.is_open ? (
-                <LockOpenIcon className="w-5 h-5" />
-              ) : (
-                <LockClosedIcon className="w-5 h-5" />
-              )}
-            </span>
-            <span className="status-label-desktop">{gameTable?.is_open ? 'Open' : 'Closed'}</span>
+            {gameTable?.is_open ? (
+              <LockOpenIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            ) : (
+              <LockClosedIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            )}
+            <span className="hidden sm:inline">{gameTable?.is_open ? 'Open' : 'Closed'}</span>
           </button>
 
           <button
             onClick={handleToggleExcludeFromOverall}
-            title={gameTable?.exclude_from_overall ? 'Excluded' : 'Included'}
+            title={
+              gameTable?.exclude_from_overall
+                ? 'Excluded from overall stats (click to include)'
+                : 'Included in overall stats (click to exclude)'
+            }
             className={`status-button ${
               gameTable?.exclude_from_overall ? 'status-button-excluded' : 'status-button-included'
             }`}
           >
-            <span className="status-icon-mobile">
-              {gameTable?.exclude_from_overall ? '✕' : '✓'}
-            </span>
-            <span className="status-label-desktop">
-              {gameTable?.exclude_from_overall ? 'Excluded' : 'Included'}
+            <ChartBarIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            <span className="hidden sm:inline">
+              {gameTable?.exclude_from_overall ? 'Excluded' : 'In Stats'}
             </span>
           </button>
 
@@ -269,14 +399,17 @@ export function GameDetailsPage() {
               runSearch('')
             }}
             className="btn-add-player-nav"
+            title="Add player to game"
           >
-            <span className="min-[640px]:hidden">+P</span>
+            <UserPlusIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 text-gray-600" />
             <span className="hidden min-[640px]:inline">Add Player</span>
+            <span className="hidden min-[480px]:inline min-[640px]:hidden">Player</span>
           </button>
 
           {gameTable?.is_open && (
-            <button onClick={handleAddRound} className="btn-add-round">
-              <span className="text-xl leading-none">+</span> Round
+            <button onClick={handleAddRound} className="btn-add-round" title="Add round">
+              <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <span>Round</span>
             </button>
           )}
         </div>
@@ -289,6 +422,51 @@ export function GameDetailsPage() {
             <span className="mobile-totals-name">{player.name}</span>
             <PlayerTotal total={playerTotals[player.id]} className="mobile-totals-score" />
           </div>
+        ))}
+      </div>
+
+      {heroPhotoUrl && (
+        <button
+          type="button"
+          className="game-photo-hero block w-full text-left"
+          onClick={() => heroPhotoSlot && openPhotoEditor(heroPhotoSlot)}
+          aria-label={`Edit ${heroPhotoSlot} game photo`}
+        >
+          <img
+            src={heroPhotoUrl}
+            alt={`${heroPhotoSlot === 'after' ? 'After' : 'Before'} the game`}
+          />
+          <span className="game-photo-hero-shade" />
+          <div className="game-photo-hero-copy">
+            <span>{heroPhotoSlot === 'after' ? 'After the game' : 'Before the game'}</span>
+            <p>Tap to view or change this photo</p>
+          </div>
+        </button>
+      )}
+
+      <div className="game-photo-gallery" aria-label="Game photos">
+        {(
+          [
+            ['before', 'Before', beforePhotoUrl],
+            ['after', 'After', afterPhotoUrl],
+          ] as const
+        ).map(([slot, label, url]) => (
+          <button
+            key={slot}
+            type="button"
+            className="game-photo-gallery-card"
+            onClick={() => openPhotoEditor(slot)}
+          >
+            {url ? (
+              <img src={url} alt={`${label} the game`} />
+            ) : (
+              <span className="game-photo-gallery-empty">
+                <PhotoIcon className="w-6 h-6" />
+                <span>Add photo</span>
+              </span>
+            )}
+            <span className="game-photo-gallery-label">{label}</span>
+          </button>
         ))}
       </div>
 
@@ -330,6 +508,50 @@ export function GameDetailsPage() {
           loading={searchLoading}
           onSelect={handleAddPlayerToGame}
           onCancel={() => setIsAddingPlayer(false)}
+        />
+      )}
+
+      {isCloseDialogOpen && (
+        <GamePhotoDialog
+          title="Close this game?"
+          description="Add one last photo of the group, or close without one."
+          pickerTitle="After the game"
+          file={closingPhoto}
+          onFileChange={setClosingPhoto}
+          existingUrl={afterPhotoUrl}
+          primaryLabel="Close Game"
+          onPrimary={() => handleCloseGame(true)}
+          secondaryLabel="Skip photo"
+          onSecondary={() => handleCloseGame(false)}
+          onClose={() => {
+            setIsCloseDialogOpen(false)
+            setClosingPhoto(null)
+            setPhotoError(null)
+          }}
+          busy={photoBusy}
+          error={photoError}
+        />
+      )}
+
+      {editingPhotoSlot && (
+        <GamePhotoDialog
+          title={`${editingPhotoSlot === 'before' ? 'Before' : 'After'} photo`}
+          description="Choose a new photo to replace the current one."
+          pickerTitle={`${editingPhotoSlot === 'before' ? 'Before' : 'After'} the game`}
+          file={editingPhoto}
+          onFileChange={setEditingPhoto}
+          existingUrl={editingPhotoUrl}
+          primaryLabel="Save Photo"
+          onPrimary={handleSavePhoto}
+          onRemove={editingPhotoPath ? handleRemovePhoto : undefined}
+          onClose={() => {
+            setEditingPhotoSlot(null)
+            setEditingPhoto(null)
+            setPhotoError(null)
+          }}
+          busy={photoBusy}
+          error={photoError}
+          primaryDisabled={!editingPhoto}
         />
       )}
     </div>

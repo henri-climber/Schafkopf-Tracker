@@ -17,6 +17,8 @@ import '@/shared/styles/home.css'
 import type { Player as PlayerRow } from '@/shared/supabase/types'
 import { useCreateTable, useTables } from '@/features/schafkopf/api/queries'
 import { useCreatePlayer, usePlayers } from '@/features/players/api/queries'
+import { replaceGamePhoto } from '@/features/schafkopf/api/gamePhotos'
+import { GamePhotoPicker } from '@/features/schafkopf/ui/GamePhotoPicker'
 
 /** Only the columns the player list actually selects. */
 type Player = Pick<PlayerRow, 'id' | 'name'>
@@ -30,6 +32,7 @@ export function HomePage() {
   const [newPlayerName, setNewPlayerName] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedFilterIds, setSelectedFilterIds] = useState<number[]>([])
+  const [beforePhoto, setBeforePhoto] = useState<File | null>(null)
 
   const { data: activeTablesData, isPending: loading } = useTables({ isOpen: true })
   const activeTables = activeTablesData ?? []
@@ -52,6 +55,7 @@ export function HomePage() {
       setSearchTerm('')
       setShowAddPlayerInput(false)
       setNewPlayerName('')
+      setBeforePhoto(null)
     }
   }, [isDialogOpen])
 
@@ -90,6 +94,19 @@ export function HomePage() {
         name: tableName.trim(),
         playerIds: selectedPlayerIds,
       })
+
+      if (beforePhoto) {
+        try {
+          await replaceGamePhoto({
+            tableId: newTable.id,
+            slot: 'before',
+            photo: beforePhoto,
+          })
+        } catch (photoError) {
+          console.error('Game created, but the before photo upload failed:', photoError)
+          alert('The game was created, but its photo could not be uploaded. You can add it again.')
+        }
+      }
 
       setTableName('')
       setSelectedPlayerIds([])
@@ -276,6 +293,14 @@ export function HomePage() {
                   />
                 </div>
 
+                <GamePhotoPicker
+                  title="Before the game"
+                  file={beforePhoto}
+                  onFileChange={setBeforePhoto}
+                  disabled={createTableMutation.isPending}
+                  compact
+                />
+
                 <div className="player-section">
                   <div className="player-section-header">
                     <label className="player-section-label">
@@ -393,8 +418,12 @@ export function HomePage() {
                 <button type="button" onClick={() => setIsDialogOpen(false)} className="btn-cancel">
                   Cancel
                 </button>
-                <button type="submit" disabled={!tableName.trim()} className="btn-create">
-                  Create Game
+                <button
+                  type="submit"
+                  disabled={!tableName.trim() || createTableMutation.isPending}
+                  className="btn-create"
+                >
+                  {createTableMutation.isPending ? 'Creating…' : 'Create Game'}
                 </button>
               </div>
             </form>
