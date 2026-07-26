@@ -4,7 +4,8 @@ import { fetchTablesWithScores, type DateRange, type StatsOptions } from './stat
 
 export const schafkopfKeys = {
   all: ['schafkopf'] as const,
-  tables: (options: { isOpen: boolean }) => ['schafkopf', 'tables', options] as const,
+  tables: (options: { isOpen: boolean; ascending: boolean }) =>
+    ['schafkopf', 'tables', options] as const,
   table: (tableId: number) => ['schafkopf', 'table', tableId] as const,
   rounds: (tableId: number) => ['schafkopf', 'rounds', tableId] as const,
   stats: (range: DateRange, options: StatsOptions) =>
@@ -12,9 +13,14 @@ export const schafkopfKeys = {
 }
 
 export function useTables(options: { isOpen: boolean; ascending?: boolean }) {
+  const normalizedOptions = {
+    isOpen: options.isOpen,
+    ascending: options.ascending ?? false,
+  }
+
   return useQuery({
-    queryKey: schafkopfKeys.tables({ isOpen: options.isOpen }),
-    queryFn: () => listTables(options),
+    queryKey: schafkopfKeys.tables(normalizedOptions),
+    queryFn: () => listTables(normalizedOptions),
     staleTime: 30_000,
   })
 }
