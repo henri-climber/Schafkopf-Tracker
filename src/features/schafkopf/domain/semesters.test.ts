@@ -62,6 +62,11 @@ describe('offsetsFor', () => {
 
   it('returns nothing for semesters with no corrections', () => {
     expect(offsetsFor('sem1')).toEqual({})
-    expect(offsetsFor('sem4')).toEqual({})
+  })
+
+  it('applies Semester 4 correction for Olli(18)', () => {
+    expect(offsetsFor('sem4')).toEqual({
+      18: -10,
+    })
   })
 })

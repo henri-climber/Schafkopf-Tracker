@@ -65,6 +65,9 @@ export const SEMESTER_POINT_OFFSETS: Readonly<Record<SemesterId, Record<PlayerId
     13: -1, // Quentin
     14: -2, // Nikita
   },
+  sem4: {
+    18: -10, // Olli
+  },
 }
 
 /** Corrections for a semester, or an empty map if it has none. */
