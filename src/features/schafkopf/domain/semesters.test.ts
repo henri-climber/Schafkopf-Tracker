@@ -3,6 +3,7 @@ import { currentSemester, offsetsFor, SEMESTERS, semesterById } from './semester
 
 describe('currentSemester', () => {
   it('returns the semester containing the given date', () => {
+    expect(currentSemester(new Date('2026-08-15T12:00:00.000Z')).id).toBe('sem5')
     expect(currentSemester(new Date('2026-07-25T12:00:00.000Z')).id).toBe('sem4')
     expect(currentSemester(new Date('2025-10-01T12:00:00.000Z')).id).toBe('sem3')
     expect(currentSemester(new Date('2024-09-01T00:00:00.000Z')).id).toBe('sem1')
@@ -11,7 +12,7 @@ describe('currentSemester', () => {
   it('falls back to the latest started semester once they have all ended', () => {
     // The old code took SEMESTERS[SEMESTERS.length - 1] unconditionally, so a
     // forgotten deploy left everyone looking at a stale term.
-    expect(currentSemester(new Date('2030-01-01T00:00:00.000Z')).id).toBe('sem4')
+    expect(currentSemester(new Date('2030-01-01T00:00:00.000Z')).id).toBe('sem5')
   })
 
   it('falls back to the first semester for dates before any of them', () => {
@@ -68,5 +69,6 @@ describe('offsetsFor', () => {
     expect(offsetsFor('sem4')).toEqual({
       18: -10,
     })
+    expect(offsetsFor('sem5')).toEqual({})
   })
 })

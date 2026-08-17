@@ -3,7 +3,13 @@ import { useParams, useNavigate } from 'react-router'
 import { supabase } from '@/shared/supabase/client'
 import type { TTMatch, TTSet, TTSide, Player as PlayerRow } from '@/shared/supabase/types'
 import { matchWinner, setsWon, setsNeeded, isSetDecided } from '@/features/tabletennis/domain/tt'
-import { LockOpenIcon, LockClosedIcon, PlusIcon, TrashIcon, ChartBarIcon } from '@heroicons/react/24/outline'
+import {
+  LockOpenIcon,
+  LockClosedIcon,
+  PlusIcon,
+  TrashIcon,
+  ChartBarIcon,
+} from '@heroicons/react/24/outline'
 import '@/shared/styles/game-details.css'
 import '@/features/tabletennis/ui/TTMatchPage.css'
 

@@ -36,9 +36,15 @@ export const SEMESTERS: readonly Semester[] = [
   },
   {
     id: 'sem4',
-    label: 'Semester 4 (April 2026 - October 2026)',
+    label: 'Semester 4 (28. Februar 2026 - 3. August 2026)',
     startDate: '2026-02-28T00:00:00.000Z',
-    endDate: '2026-09-30T23:59:59.999Z',
+    endDate: '2026-08-03T23:59:59.999Z',
+  },
+  {
+    id: 'sem5',
+    label: 'Semester 5 (August 2026 - February 2027)',
+    startDate: '2026-08-04T00:00:00.000Z',
+    endDate: '2027-02-28T23:59:59.999Z',
   },
 ]
 
