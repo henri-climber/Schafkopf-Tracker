@@ -1,4 +1,4 @@
-import { useSportMode } from '@/shared/sport-mode/SportModeContext'
+import { useSportMode } from '@/shared/sport-mode/context'
 
 // Globaler Umschalter Schafkopf <-> Tischtennis. Wird auf der Startseite und
 // auf der TT-Startseite gerendert; der Modus wird im localStorage gehalten.

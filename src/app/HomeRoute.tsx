@@ -1,4 +1,4 @@
-import { useSportMode } from '@/shared/sport-mode/SportModeContext'
+import { useSportMode } from '@/shared/sport-mode/context'
 import { HomePage } from '@/features/schafkopf/ui/HomePage'
 import { TTHomePage } from '@/features/tabletennis/ui/TTHomePage'
 
