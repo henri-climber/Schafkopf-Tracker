@@ -15,6 +15,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router'],
+          recharts: ['recharts'],
+          supabase: ['@supabase/supabase-js'],
+          tanstack: ['@tanstack/react-query', '@tanstack/react-table'],
+        },
+      },
+    },
   },
   server: {
     port: 3000,

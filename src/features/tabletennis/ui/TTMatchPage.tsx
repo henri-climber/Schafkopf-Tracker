@@ -253,9 +253,9 @@ export function TTMatchPage() {
             className={`status-button ${match.is_open ? 'status-button-open' : 'status-button-closed'} disabled:opacity-40 disabled:cursor-not-allowed`}
           >
             {match.is_open ? (
-              <LockOpenIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <LockOpenIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             ) : (
-              <LockClosedIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <LockClosedIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             )}
             <span className="hidden sm:inline">{match.is_open ? 'Open' : 'Closed'}</span>
           </button>
@@ -269,7 +269,7 @@ export function TTMatchPage() {
             }
             className={`status-button ${match.exclude_from_overall ? 'status-button-excluded' : 'status-button-included'}`}
           >
-            <ChartBarIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            <ChartBarIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             <span className="hidden sm:inline">
               {match.exclude_from_overall ? 'Excluded' : 'In Stats'}
             </span>

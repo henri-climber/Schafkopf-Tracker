@@ -369,9 +369,9 @@ export function GameDetailsPage() {
             }`}
           >
             {gameTable?.is_open ? (
-              <LockOpenIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <LockOpenIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             ) : (
-              <LockClosedIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <LockClosedIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             )}
             <span className="hidden sm:inline">{gameTable?.is_open ? 'Open' : 'Closed'}</span>
           </button>
@@ -387,7 +387,7 @@ export function GameDetailsPage() {
               gameTable?.exclude_from_overall ? 'status-button-excluded' : 'status-button-included'
             }`}
           >
-            <ChartBarIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            <ChartBarIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             <span className="hidden sm:inline">
               {gameTable?.exclude_from_overall ? 'Excluded' : 'In Stats'}
             </span>
@@ -401,14 +401,14 @@ export function GameDetailsPage() {
             className="btn-add-player-nav"
             title="Add player to game"
           >
-            <UserPlusIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 text-gray-600" />
+            <UserPlusIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-gray-600" />
             <span className="hidden min-[640px]:inline">Add Player</span>
             <span className="hidden min-[480px]:inline min-[640px]:hidden">Player</span>
           </button>
 
           {gameTable?.is_open && (
             <button onClick={handleAddRound} className="btn-add-round" title="Add round">
-              <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
               <span>Round</span>
             </button>
           )}

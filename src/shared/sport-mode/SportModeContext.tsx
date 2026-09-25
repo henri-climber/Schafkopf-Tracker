@@ -1,16 +1,7 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { SportModeContext, STORAGE_KEY, type SportMode } from './context'
 
-export type SportMode = 'schafkopf' | 'tt'
-
-const STORAGE_KEY = 'sportMode'
-
-interface SportModeContextValue {
-  mode: SportMode
-  setMode: (mode: SportMode) => void
-  toggleMode: () => void
-}
-
-const SportModeContext = createContext<SportModeContextValue | undefined>(undefined)
+export type { SportMode }
 
 function readInitialMode(): SportMode {
   if (typeof window === 'undefined') return 'schafkopf'
@@ -33,10 +24,4 @@ export function SportModeProvider({ children }: { children: ReactNode }) {
       {children}
     </SportModeContext.Provider>
   )
-}
-
-export function useSportMode(): SportModeContextValue {
-  const ctx = useContext(SportModeContext)
-  if (!ctx) throw new Error('useSportMode must be used within a SportModeProvider')
-  return ctx
 }

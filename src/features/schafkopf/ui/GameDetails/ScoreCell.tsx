@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 
 /** Empty means zero; anything unparseable also means zero. */
-export function parseScoreInput(value: string): number {
+function parseScoreInput(value: string): number {
   if (!value) return 0
   return parseInt(value) || 0
 }
