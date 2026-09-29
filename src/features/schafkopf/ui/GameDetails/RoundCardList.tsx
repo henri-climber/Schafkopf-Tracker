@@ -1,15 +1,15 @@
 import type { RefObject } from 'react'
+import { PencilSquareIcon } from '@heroicons/react/24/outline'
 import type { Player } from '@/shared/supabase/types'
 import { roundSum } from '@/features/schafkopf/domain/scoring'
-import { ScoreCell } from './ScoreCell'
-import type { EditingCell, RoundRow } from './types'
+import { ScoreDisplay } from './ScoreCell'
+import { RoundSummary } from './RoundSummary'
+import type { RoundRow } from './types'
 
 interface Props {
   rows: RoundRow[]
   players: Player[]
-  editingCell: EditingCell | null
-  onEditCell: (cell: EditingCell | null) => void
-  onScoreUpdate: (roundId: number, playerId: number, score: number) => void
+  onOpenRound: (roundId: number) => void
   onAddRound: () => void
   expandedRoundId: number | null
   onToggleRound: (roundId: number | null) => void
@@ -21,9 +21,7 @@ interface Props {
 export function RoundCardList({
   rows,
   players,
-  editingCell,
-  onEditCell,
-  onScoreUpdate,
+  onOpenRound,
   onAddRound,
   expandedRoundId,
   onToggleRound,
@@ -35,9 +33,11 @@ export function RoundCardList({
       {rows.length === 0 ? (
         <div className="empty-state">
           <p>No rounds played yet.</p>
-          <button onClick={onAddRound} className="empty-state-btn">
-            Start the game
-          </button>
+          {isOpen && (
+            <button onClick={onAddRound} className="empty-state-btn">
+              Start the game
+            </button>
+          )}
         </div>
       ) : (
         rows.map((row) => {
@@ -54,9 +54,12 @@ export function RoundCardList({
                 className="round-card-header"
                 onClick={() => onToggleRound(isExpanded ? null : row.roundId)}
               >
-                <span className={`round-card-number ${isInvalid ? 'round-number-invalid' : ''}`}>
-                  Runde {row.roundNumber}
-                </span>
+                <div className="round-card-title">
+                  <span className={`round-card-number ${isInvalid ? 'round-number-invalid' : ''}`}>
+                    Runde {row.roundNumber}
+                  </span>
+                  <RoundSummary row={row} players={players} />
+                </div>
                 <div className="round-card-header-right">
                   {isInvalid && (
                     <span className="round-error-icon" title={`Sum is ${sum} (should be 0)`}>
@@ -84,20 +87,24 @@ export function RoundCardList({
                   {players.map((player) => (
                     <div key={player.id} className="round-card-score-row">
                       <span className="round-card-player-name">{player.name}</span>
-                      <ScoreCell
-                        score={row.scores[player.id] ?? 0}
-                        isEditing={
-                          editingCell?.roundId === row.roundId &&
-                          editingCell?.playerId === player.id
-                        }
-                        onStartEdit={() =>
-                          onEditCell({ roundId: row.roundId, playerId: player.id })
-                        }
-                        onCommit={(value) => onScoreUpdate(row.roundId, player.id, value)}
-                        onFinish={() => onEditCell(null)}
-                      />
+                      <div className="score-cell">
+                        <ScoreDisplay
+                          score={row.scores[player.id] ?? 0}
+                          role={row.roles[player.id] ?? null}
+                        />
+                      </div>
                     </div>
                   ))}
+                  {isOpen && (
+                    <button
+                      type="button"
+                      className="round-card-edit"
+                      onClick={() => onOpenRound(row.roundId)}
+                    >
+                      <PencilSquareIcon className="w-4 h-4" />
+                      Bearbeiten
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

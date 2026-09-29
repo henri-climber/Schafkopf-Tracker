@@ -7,31 +7,32 @@ import {
 } from '@tanstack/react-table'
 import type { Player } from '@/shared/supabase/types'
 import { roundSum } from '@/features/schafkopf/domain/scoring'
-import { ScoreCell } from './ScoreCell'
+import { ScoreDisplay } from './ScoreCell'
 import { PlayerTotal } from './PlayerTotal'
-import type { EditingCell, RoundRow } from './types'
+import { RoundSummary } from './RoundSummary'
+import type { RoundRow } from './types'
 
 interface Props {
   rows: RoundRow[]
   players: Player[]
   playerTotals: Record<number, number>
-  editingCell: EditingCell | null
-  onEditCell: (cell: EditingCell | null) => void
-  onScoreUpdate: (roundId: number, playerId: number, score: number) => void
+  isOpen: boolean
+  onOpenRound: (roundId: number) => void
   onAddRound: () => void
 }
 
-/** The desktop score sheet. */
+/** The desktop score sheet. Clicking a round opens it in the round editor. */
 export function RoundTable({
   rows,
   players,
   playerTotals,
-  editingCell,
-  onEditCell,
-  onScoreUpdate,
+  isOpen,
+  onOpenRound,
   onAddRound,
 }: Props) {
   const columnHelper = useMemo(() => createColumnHelper<RoundRow>(), [])
+  // Games recorded before game modes existed look exactly as they always did.
+  const showGameColumn = rows.some((row) => row.round.game_mode != null)
 
   const columns = useMemo(() => {
     const roundNumberColumn = columnHelper.accessor('roundNumber', {
@@ -55,6 +56,16 @@ export function RoundTable({
       size: 50,
     })
 
+    const gameColumn = columnHelper.display({
+      id: 'game',
+      header: () => <span className="game-column-header">Spiel</span>,
+      cell: (info) => (
+        <div className="game-column-cell">
+          <RoundSummary row={info.row.original} players={players} />
+        </div>
+      ),
+    })
+
     const playerColumns = players.map((player) =>
       columnHelper.accessor((row) => row.scores[player.id], {
         id: `player_${player.id}`,
@@ -64,29 +75,21 @@ export function RoundTable({
             <PlayerTotal total={playerTotals[player.id]} className="player-total-badge" />
           </div>
         ),
-        cell: (info) => {
-          const roundId = info.row.original.roundId
-          return (
-            <ScoreCell
+        cell: (info) => (
+          <div className="score-cell">
+            <ScoreDisplay
               score={info.getValue() ?? 0}
-              isEditing={editingCell?.roundId === roundId && editingCell?.playerId === player.id}
-              onStartEdit={() => onEditCell({ roundId, playerId: player.id })}
-              onCommit={(value) => onScoreUpdate(roundId, player.id, value)}
-              onFinish={() => onEditCell(null)}
-              onTabNavigate={(direction) => {
-                const next = players.findIndex((p) => p.id === player.id) + direction
-                if (next < 0 || next >= players.length) return false
-                onEditCell({ roundId, playerId: players[next].id })
-                return true
-              }}
+              role={info.row.original.roles[player.id] ?? null}
             />
-          )
-        },
+          </div>
+        ),
       }),
     )
 
-    return [roundNumberColumn, ...playerColumns]
-  }, [players, playerTotals, editingCell, columnHelper, onEditCell, onScoreUpdate])
+    return showGameColumn
+      ? [roundNumberColumn, gameColumn, ...playerColumns]
+      : [roundNumberColumn, ...playerColumns]
+  }, [players, playerTotals, columnHelper, showGameColumn])
 
   const table = useReactTable({
     data: rows,
@@ -113,7 +116,10 @@ export function RoundTable({
             {table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
-                className={`table-row ${roundSum(row.original.scores) !== 0 ? 'table-row-invalid' : ''}`}
+                onClick={isOpen ? () => onOpenRound(row.original.roundId) : undefined}
+                className={`table-row ${isOpen ? 'table-row-editable' : ''} ${
+                  roundSum(row.original.scores) !== 0 ? 'table-row-invalid' : ''
+                }`}
               >
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="table-td">
@@ -122,7 +128,6 @@ export function RoundTable({
                 ))}
               </tr>
             ))}
-            <tr></tr>
           </tbody>
         </table>
       </div>
@@ -130,9 +135,11 @@ export function RoundTable({
       {rows.length === 0 && (
         <div className="empty-state">
           <p>No rounds played yet.</p>
-          <button onClick={onAddRound} className="empty-state-btn">
-            Start the game
-          </button>
+          {isOpen && (
+            <button onClick={onAddRound} className="empty-state-btn">
+              Start the game
+            </button>
+          )}
         </div>
       )}
     </div>
