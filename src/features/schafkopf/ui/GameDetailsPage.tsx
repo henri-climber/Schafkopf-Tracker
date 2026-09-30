@@ -461,7 +461,7 @@ export function GameDetailsPage() {
             className="btn-add-player-nav"
             title="Punkteregeln für dieses Spiel"
           >
-            <AdjustmentsHorizontalIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 text-gray-600" />
+            <AdjustmentsHorizontalIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-gray-600" />
             <span className="hidden min-[640px]:inline">Regeln</span>
           </button>
 

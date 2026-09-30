@@ -1,7 +1,7 @@
 import type { RoundRole } from '@/features/schafkopf/domain/gameModes'
 
 /** Empty means zero; anything unparseable also means zero. */
-function parseScoreInput(value: string): number {
+export function parseScoreInput(value: string): number {
   if (!value) return 0
   return parseInt(value) || 0
 }
