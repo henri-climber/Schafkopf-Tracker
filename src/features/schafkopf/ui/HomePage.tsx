@@ -11,6 +11,7 @@ import {
   ClockIcon,
   ArrowRightIcon,
   TableCellsIcon,
+  AdjustmentsHorizontalIcon,
 } from '@heroicons/react/24/outline'
 import { SportToggle } from '@/shared/sport-mode/SportToggle'
 import '@/shared/styles/home.css'
@@ -150,6 +151,11 @@ export function HomePage() {
           </div>
         </div>
       </div>
+
+      <button onClick={() => navigate('/settings/scoring')} className="scoring-settings-link">
+        <AdjustmentsHorizontalIcon className="w-4 h-4" />
+        Punkteregeln
+      </button>
 
       {/* Active Games Section */}
       <div className="active-games-section">

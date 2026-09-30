@@ -8,17 +8,28 @@ import {
   UserPlusIcon,
   PlusIcon,
   PhotoIcon,
+  AdjustmentsHorizontalIcon,
 } from '@heroicons/react/24/outline'
 import { useTableRealtime } from '@/features/schafkopf/api/useTableRealtime'
 import { schafkopfKeys } from '@/features/schafkopf/api/queries'
 import {
   addPlayerToTable,
-  addRound,
   getTableDetail,
   listRounds,
-  upsertScore,
+  saveRound,
 } from '@/features/schafkopf/api/rounds'
 import { setTableFlags } from '@/features/schafkopf/api/tables'
+import { setTableScoringConfig } from '@/features/schafkopf/api/scoringConfig'
+import {
+  newRoundInput,
+  parseScoringConfig,
+  roundInputFromStored,
+  type RecalculatedRound,
+  type RoundInput,
+  type RoundRole,
+  type ScoringConfig,
+  type StoredRound,
+} from '@/features/schafkopf/domain/gameModes'
 import {
   closeGameWithPhoto,
   getGamePhotoUrl,
@@ -35,7 +46,19 @@ import { RoundCardList } from './GameDetails/RoundCardList'
 import { AddPlayerDialog } from './GameDetails/AddPlayerDialog'
 import { PlayerTotal } from './GameDetails/PlayerTotal'
 import { GamePhotoDialog } from './GamePhotoDialog'
-import type { EditingCell, RoundRow } from './GameDetails/types'
+import {
+  RoundEditorDialog,
+  type SuccessfulEvaluation,
+} from './GameDetails/RoundEditor/RoundEditorDialog'
+import { TableRulesDialog } from './GameDetails/TableRulesDialog'
+import type { RoundRow } from './GameDetails/types'
+
+interface EditorState {
+  /** null for a new round. */
+  roundId: number | null
+  title: string
+  initial: RoundInput
+}
 
 export function GameDetailsPage() {
   const { id } = useParams<{ id: string }>()
@@ -47,9 +70,7 @@ export function GameDetailsPage() {
 
   /**
    * Matches the 820px breakpoint in game-details.css. The two score sheets are
-   * mutually exclusive views of the same state, so only one may be mounted:
-   * both render an autoFocus input for the cell being edited, and a hidden one
-   * still takes focus.
+   * mutually exclusive views of the same state, so only one is mounted.
    */
   const isDesktop = useMediaQuery('(min-width: 821px)')
 
@@ -57,7 +78,8 @@ export function GameDetailsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [candidates, setCandidates] = useState<Player[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
-  const [editingCell, setEditingCell] = useState<EditingCell | null>(null)
+  const [editor, setEditor] = useState<EditorState | null>(null)
+  const [isRulesOpen, setIsRulesOpen] = useState(false)
   const [expandedRoundId, setExpandedRoundId] = useState<number | null>(null)
   const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false)
   const [closingPhoto, setClosingPhoto] = useState<File | null>(null)
@@ -67,7 +89,6 @@ export function GameDetailsPage() {
   const [photoError, setPhotoError] = useState<string | null>(null)
 
   const bottomRef = useRef<HTMLDivElement>(null)
-  const addingRound = useRef(false)
 
   const detailQuery = useQuery({
     queryKey: schafkopfKeys.table(tableId),
@@ -105,23 +126,43 @@ export function GameDetailsPage() {
     }
   }, [rounds.length])
 
-  // Crossing the breakpoint swaps which sheet is mounted, and an unmounting
-  // input never fires blur. Close the editor rather than reopening it, focused,
-  // in the other view.
-  useEffect(() => {
-    setEditingCell(null)
-  }, [isDesktop])
-
   const rows: RoundRow[] = useMemo(
     () =>
       rounds.map((round) => {
-        const row: RoundRow = { roundNumber: round.round_number, roundId: round.id, scores: {} }
+        const row: RoundRow = {
+          roundNumber: round.round_number,
+          roundId: round.id,
+          round,
+          scores: {},
+          roles: {},
+        }
         for (const score of roundScores) {
-          if (score.round_id === round.id) row.scores[score.player_id] = score.raw_score
+          if (score.round_id !== round.id) continue
+          row.scores[score.player_id] = score.raw_score
+          row.roles[score.player_id] = score.role
         }
         return row
       }),
     [rounds, roundScores],
+  )
+
+  const scoringConfig = useMemo(
+    () => parseScoringConfig(gameTable?.scoring_config),
+    [gameTable?.scoring_config],
+  )
+  const playerIds = useMemo(() => players.map((p) => p.id), [players])
+
+  const storedRounds: StoredRound[] = useMemo(
+    () =>
+      rows.map((row) => ({
+        ...row.round,
+        scores: playerIds.map((player_id) => ({
+          player_id,
+          raw_score: row.scores[player_id] ?? 0,
+          role: (row.roles[player_id] ?? null) as RoundRole | null,
+        })),
+      })),
+    [rows, playerIds],
   )
 
   const playerTotals = useMemo(() => {
@@ -133,34 +174,60 @@ export function GameDetailsPage() {
     return totals
   }, [players, roundScores])
 
-  const handleScoreUpdate = useCallback(
-    async (roundId: number, playerId: number, newScore: number) => {
-      try {
-        await upsertScore(roundId, playerId, newScore)
-        await refreshRounds()
-      } catch (err) {
-        console.error('Error updating score:', err)
-      }
+  const handleAddRound = useCallback(() => {
+    // The dealer — who sits out at bigger tables — moves one seat along from
+    // the last round that recorded who sat out.
+    const lastScored = [...rows]
+      .reverse()
+      .find((row) => row.round.game_mode && row.round.game_mode !== 'manual')
+    const previousSittingOut = lastScored
+      ? playerIds.filter((id) => lastScored.roles[id] === 'sitting_out')
+      : null
+    setEditor({
+      roundId: null,
+      title: `Runde ${rows.length > 0 ? rows[rows.length - 1].roundNumber + 1 : 1}`,
+      initial: newRoundInput(scoringConfig, playerIds, previousSittingOut),
+    })
+  }, [rows, playerIds, scoringConfig])
+
+  const handleOpenRound = useCallback(
+    (roundId: number) => {
+      const stored = storedRounds.find((round) => round.id === roundId)
+      const row = rows.find((r) => r.roundId === roundId)
+      if (!stored || !row) return
+      setEditor({
+        roundId,
+        title: `Runde ${row.roundNumber} bearbeiten`,
+        initial: roundInputFromStored(stored, stored.scores, playerIds),
+      })
     },
-    [refreshRounds],
+    [rows, storedRounds, playerIds],
   )
 
-  const handleAddRound = useCallback(async () => {
-    // Six rounds once landed on one table within 116ms because every tap read
-    // the same not-yet-updated state. The database now assigns the number, but
-    // there is still no reason to let one tap become six rounds.
-    if (addingRound.current) return
-    addingRound.current = true
-    try {
-      const round = await addRound({ tableId, playerIds: players.map((p) => p.id) })
-      await refreshRounds()
-      setExpandedRoundId(round.id)
-    } catch (err) {
-      console.error('Error adding round:', err)
-    } finally {
-      addingRound.current = false
-    }
-  }, [tableId, players, refreshRounds])
+  const handleSaveRound = async (evaluation: SuccessfulEvaluation) => {
+    if (!editor) return
+    // The editor's save button disables itself while this runs, so one tap
+    // cannot become several rounds.
+    const round = await saveRound({
+      tableId,
+      roundId: editor.roundId,
+      facts: evaluation.facts,
+      scores: playerIds.map((player_id) => ({
+        player_id,
+        raw_score: evaluation.scores[player_id] ?? 0,
+        role: evaluation.roles[player_id] ?? null,
+      })),
+    })
+    await refreshRounds()
+    setEditor(null)
+    setExpandedRoundId(round.id)
+  }
+
+  const handleSaveRules = async (config: ScoringConfig, changed: RecalculatedRound[]) => {
+    await setTableScoringConfig({ tableId, config, rounds: changed })
+    await Promise.all([refreshTable(), refreshRounds()])
+    setIsRulesOpen(false)
+  }
 
   const handleToggleIsOpen = async () => {
     if (!gameTable) return
@@ -265,11 +332,7 @@ export function GameDetailsPage() {
 
   const handleAddPlayerToGame = async (playerId: number) => {
     try {
-      await addPlayerToTable(
-        tableId,
-        playerId,
-        rounds.map((r) => r.id),
-      )
+      await addPlayerToTable(tableId, playerId, rounds)
       await Promise.all([refreshTable(), refreshRounds()])
       setIsAddingPlayer(false)
       setSearchTerm('')
@@ -394,6 +457,15 @@ export function GameDetailsPage() {
           </button>
 
           <button
+            onClick={() => setIsRulesOpen(true)}
+            className="btn-add-player-nav"
+            title="Punkteregeln für dieses Spiel"
+          >
+            <AdjustmentsHorizontalIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 text-gray-600" />
+            <span className="hidden min-[640px]:inline">Regeln</span>
+          </button>
+
+          <button
             onClick={() => {
               setIsAddingPlayer(true)
               runSearch('')
@@ -476,18 +548,15 @@ export function GameDetailsPage() {
             rows={rows}
             players={players}
             playerTotals={playerTotals}
-            editingCell={editingCell}
-            onEditCell={setEditingCell}
-            onScoreUpdate={handleScoreUpdate}
+            isOpen={!!gameTable?.is_open}
+            onOpenRound={handleOpenRound}
             onAddRound={handleAddRound}
           />
         ) : (
           <RoundCardList
             rows={rows}
             players={players}
-            editingCell={editingCell}
-            onEditCell={setEditingCell}
-            onScoreUpdate={handleScoreUpdate}
+            onOpenRound={handleOpenRound}
             onAddRound={handleAddRound}
             expandedRoundId={expandedRoundId}
             onToggleRound={setExpandedRoundId}
@@ -496,6 +565,30 @@ export function GameDetailsPage() {
           />
         )}
       </div>
+
+      {editor && (
+        <RoundEditorDialog
+          // A fresh editor per round, so its state never leaks between rounds.
+          key={editor.roundId ?? 'new'}
+          title={editor.title}
+          players={players}
+          config={scoringConfig}
+          initial={editor.initial}
+          onSave={handleSaveRound}
+          onClose={() => setEditor(null)}
+        />
+      )}
+
+      {isRulesOpen && (
+        <TableRulesDialog
+          config={scoringConfig}
+          rounds={storedRounds}
+          players={players}
+          editable={!!gameTable?.is_open}
+          onSave={handleSaveRules}
+          onClose={() => setIsRulesOpen(false)}
+        />
+      )}
 
       {isAddingPlayer && (
         <AddPlayerDialog

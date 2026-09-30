@@ -1,0 +1,130 @@
+@reference '@/shared/styles/index.css';
+
+.scoring-form {
+  @apply space-y-6 text-left disabled:opacity-60;
+}
+
+.scoring-form-heading {
+  @apply mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500;
+}
+
+.scoring-form-note {
+  @apply mb-2 text-xs text-gray-500;
+}
+
+.scoring-form-modes {
+  @apply divide-y divide-gray-100 rounded-xl border border-gray-200 bg-white;
+}
+
+.scoring-form-modes-head,
+.scoring-form-mode {
+  @apply grid items-center gap-3 px-3;
+  grid-template-columns: 1fr 5rem 5rem;
+}
+
+.scoring-form-modes-head {
+  @apply py-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400;
+}
+
+.scoring-form-mode {
+  @apply py-2;
+}
+
+.scoring-form-mode-off .scoring-form-number,
+.scoring-form-mode-off .scoring-form-toggle span {
+  @apply opacity-50;
+}
+
+.scoring-form-toggle {
+  @apply flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-800;
+}
+
+.scoring-form-toggle input {
+  @apply h-4 w-4 accent-blue-600;
+}
+
+.scoring-form-na {
+  @apply text-center text-gray-300;
+}
+
+.scoring-form-field {
+  @apply flex items-center justify-between gap-3 py-1.5;
+}
+
+.scoring-form-field-label {
+  @apply flex items-center gap-2 text-sm font-medium text-gray-800;
+}
+
+.scoring-form-hint {
+  @apply text-xs font-normal text-gray-400;
+}
+
+.scoring-form-number {
+  @apply w-20 rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-right font-mono text-sm
+         focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20;
+}
+
+/* ── Rules dialog: recalculation summary ── */
+
+.scoring-recalc {
+  @apply space-y-3;
+}
+
+.scoring-recalc p {
+  @apply text-sm text-gray-700;
+}
+
+.scoring-recalc-deltas {
+  @apply divide-y divide-gray-100 rounded-xl bg-gray-50 px-3;
+}
+
+.scoring-recalc-delta {
+  @apply flex justify-between py-2 text-sm;
+}
+
+.scoring-recalc-delta > span:last-child {
+  @apply font-mono font-semibold;
+}
+
+/* ── Global settings page ── */
+
+.scoring-settings-container {
+  @apply min-h-screen bg-gray-50 text-left text-gray-900;
+}
+
+.scoring-settings-header {
+  @apply sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 bg-white/95 p-4 backdrop-blur-md;
+}
+
+.scoring-settings-back {
+  @apply rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800;
+}
+
+.scoring-settings-title {
+  @apply text-xl font-bold;
+}
+
+.scoring-settings-content {
+  @apply mx-auto max-w-xl space-y-4 p-4 pb-28;
+}
+
+.scoring-settings-intro {
+  @apply rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800;
+}
+
+.scoring-settings-footer {
+  @apply fixed inset-x-0 bottom-0 border-t border-gray-200 bg-white/95 backdrop-blur-md;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.scoring-settings-footer-inner {
+  @apply mx-auto flex max-w-xl items-center gap-2 p-3;
+}
+
+.scoring-settings-status {
+  @apply mr-auto text-sm text-gray-500;
+}
+
+.scoring-settings-status.error {
+  @apply text-red-600;
+}

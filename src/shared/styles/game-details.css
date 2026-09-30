@@ -92,6 +92,10 @@
   @apply transition-colors hover:bg-gray-50;
 }
 
+.table-row-editable {
+  @apply cursor-pointer;
+}
+
 .table-row-invalid {
   @apply bg-red-50 hover:bg-red-100;
 }
@@ -199,7 +203,54 @@
 }
 
 .score-display {
-  @apply text-lg font-mono font-medium cursor-pointer hover:bg-gray-50 px-3 py-1 rounded transition-colors;
+  @apply text-lg font-mono font-medium px-3 py-1 rounded transition-colors;
+}
+
+/* Who played: a solid underline for the declarer, a dotted one for the partner. */
+.score-role-declarer {
+  @apply underline decoration-2 underline-offset-4;
+}
+
+.score-role-partner {
+  @apply underline decoration-dotted decoration-2 underline-offset-4;
+}
+
+.score-sitting-out {
+  @apply text-gray-300;
+}
+
+/* ── Game column / round summary ── */
+
+.game-column-header {
+  @apply block text-left text-xs font-semibold uppercase tracking-wider text-gray-500 px-2;
+}
+
+.game-column-cell {
+  @apply px-2 py-1.5 text-left;
+}
+
+.round-summary {
+  @apply flex flex-col leading-tight;
+}
+
+.round-summary-mode {
+  @apply text-sm font-semibold text-gray-800;
+}
+
+.round-summary-players {
+  @apply text-xs text-gray-600;
+}
+
+.round-summary-won {
+  @apply font-bold text-green-600;
+}
+
+.round-summary-lost {
+  @apply font-bold text-red-600;
+}
+
+.round-summary-extras {
+  @apply text-[11px] text-gray-400;
 }
 
 .score-positive {
@@ -292,8 +343,25 @@
   @apply bg-red-100 border-red-200;
 }
 
+.round-card-title {
+  @apply flex min-w-0 items-center gap-3;
+}
+
+.round-card-title .round-summary {
+  @apply min-w-0 truncate;
+}
+
+.round-card-title .round-summary-extras {
+  @apply hidden;
+}
+
+.round-card-edit {
+  @apply flex w-full items-center justify-center gap-1.5 py-3 text-sm font-medium text-blue-600
+         hover:bg-blue-50 active:bg-blue-100;
+}
+
 .round-card-number {
-  @apply text-sm font-semibold text-gray-500 font-mono;
+  @apply text-sm font-semibold text-gray-500 font-mono shrink-0;
 }
 
 .round-card-scores {

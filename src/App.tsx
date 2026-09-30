@@ -3,6 +3,7 @@ import { HomeRoute } from '@/app/HomeRoute'
 import { GameDetailsPage } from '@/features/schafkopf/ui/GameDetailsPage'
 import { LeaderboardPage } from '@/features/schafkopf/ui/LeaderboardPage'
 import { PastGamesPage } from '@/features/schafkopf/ui/PastGamesPage'
+import { ScoringSettingsPage } from '@/features/schafkopf/ui/ScoringSettingsPage'
 import { TTMatchPage } from '@/features/tabletennis/ui/TTMatchPage'
 import { TTLeaderboardPage } from '@/features/tabletennis/ui/TTLeaderboardPage'
 import { TTPastMatchesPage } from '@/features/tabletennis/ui/TTPastMatchesPage'
@@ -22,6 +23,7 @@ function App() {
               <Route path="/game-details/:id" element={<GameDetailsPage />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
               <Route path="/past-games" element={<PastGamesPage />} />
+              <Route path="/settings/scoring" element={<ScoringSettingsPage />} />
               <Route path="/tt/match/:id" element={<TTMatchPage />} />
               <Route path="/tt/leaderboard" element={<TTLeaderboardPage />} />
               <Route path="/tt/past-matches" element={<TTPastMatchesPage />} />

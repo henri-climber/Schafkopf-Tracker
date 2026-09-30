@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createTable, listTables } from './tables'
 import { fetchTablesWithScores, type DateRange, type StatsOptions } from './stats'
+import { getGlobalScoringConfig, updateGlobalScoringConfig } from './scoringConfig'
 
 export const schafkopfKeys = {
   all: ['schafkopf'] as const,
@@ -10,6 +11,7 @@ export const schafkopfKeys = {
   rounds: (tableId: number) => ['schafkopf', 'rounds', tableId] as const,
   stats: (range: DateRange, options: StatsOptions) =>
     ['schafkopf', 'stats', range, options] as const,
+  scoringConfig: ['schafkopf', 'scoringConfig'] as const,
 }
 
 export function useTables(options: { isOpen: boolean; ascending?: boolean }) {
@@ -43,5 +45,22 @@ export function useTablesWithScores(range: DateRange, options: StatsOptions) {
     queryKey: schafkopfKeys.stats(range, options),
     queryFn: () => fetchTablesWithScores(range, options),
     staleTime: 60_000,
+  })
+}
+
+/** The global default tariff that new games copy. */
+export function useGlobalScoringConfig() {
+  return useQuery({
+    queryKey: schafkopfKeys.scoringConfig,
+    queryFn: getGlobalScoringConfig,
+    staleTime: 60_000,
+  })
+}
+
+export function useUpdateGlobalScoringConfig() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: updateGlobalScoringConfig,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: schafkopfKeys.scoringConfig }),
   })
 }

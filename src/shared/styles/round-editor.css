@@ -1,0 +1,181 @@
+@reference '@/shared/styles/index.css';
+
+/*
+ * The round editor: a bottom sheet on phones, a centred dialog on desktop. It
+ * is used at the table between hands, so targets are large and the save button
+ * never scrolls away.
+ */
+
+.round-editor-overlay {
+  @apply fixed inset-0 z-50 flex items-end justify-center bg-black/50 text-left sm:items-center sm:p-4;
+}
+
+.round-editor {
+  @apply flex w-full max-w-xl flex-col bg-white shadow-xl rounded-t-2xl sm:rounded-2xl;
+  max-height: 92dvh;
+}
+
+.round-editor-header {
+  @apply flex items-center justify-between gap-4 border-b border-gray-100 px-5 py-3;
+}
+
+.round-editor-header h2 {
+  @apply text-lg font-bold text-gray-900;
+}
+
+.round-editor-close {
+  @apply rounded-full p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-50;
+}
+
+.round-editor-body {
+  @apply flex-1 overflow-y-auto px-5 py-4 space-y-5;
+}
+
+.round-editor-section h3 {
+  @apply mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500;
+}
+
+.round-editor-chips {
+  @apply flex flex-wrap gap-2;
+}
+
+.round-editor-chip {
+  @apply min-h-10 rounded-full border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium text-gray-700
+         transition-colors hover:bg-gray-50;
+}
+
+.round-editor-chip.active.brand {
+  @apply border-blue-600 bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.round-editor-chip.active.muted {
+  @apply border-gray-700 bg-gray-700 text-white hover:bg-gray-800;
+}
+
+.round-editor-modes {
+  @apply grid grid-cols-3 gap-2 sm:grid-cols-4;
+}
+
+.round-editor-mode {
+  @apply min-h-11 rounded-xl border border-gray-300 bg-white px-2 py-2 text-sm font-semibold text-gray-700
+         transition-colors hover:bg-gray-50;
+}
+
+.round-editor-mode.active {
+  @apply border-blue-600 bg-blue-50 text-blue-700 ring-2 ring-blue-600/20;
+}
+
+.round-editor-mode-manual {
+  @apply border-dashed text-gray-500;
+}
+
+.round-editor-result {
+  @apply grid grid-cols-2 gap-2;
+}
+
+.round-editor-result-btn {
+  @apply min-h-11 rounded-xl border border-gray-300 bg-white text-sm font-semibold text-gray-700 transition-colors;
+}
+
+.round-editor-result-btn.won.active {
+  @apply border-emerald-600 bg-emerald-600 text-white;
+}
+
+.round-editor-result-btn.lost.active {
+  @apply border-rose-600 bg-rose-600 text-white;
+}
+
+.round-editor-extras {
+  @apply space-y-3;
+}
+
+.round-editor-stepper {
+  @apply flex items-center justify-between gap-3;
+}
+
+.round-editor-stepper-label {
+  @apply text-sm font-medium text-gray-700;
+}
+
+.round-editor-stepper-hint {
+  @apply ml-2 text-xs text-gray-400;
+}
+
+.round-editor-stepper-controls {
+  @apply flex items-center gap-3;
+}
+
+.round-editor-stepper-controls button {
+  @apply flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 text-gray-700
+         hover:bg-gray-50 disabled:opacity-30;
+}
+
+.round-editor-stepper-value {
+  @apply w-6 text-center font-mono text-base font-semibold;
+}
+
+.round-editor-preview {
+  @apply rounded-xl bg-gray-50 p-3 space-y-2;
+}
+
+.round-editor-breakdown {
+  @apply text-xs text-gray-500 space-y-0.5 font-mono;
+}
+
+.round-editor-preview-scores {
+  @apply divide-y divide-gray-200/70;
+}
+
+.round-editor-preview-row {
+  @apply flex items-center justify-between py-1.5 text-sm;
+}
+
+.round-editor-preview-row em {
+  @apply ml-1 text-xs not-italic text-gray-400;
+}
+
+.round-editor-preview-row > span:last-child {
+  @apply font-mono text-base font-semibold;
+}
+
+.round-editor-preview-row.sitting-out {
+  @apply text-gray-400;
+}
+
+.round-editor-manual {
+  @apply space-y-2;
+}
+
+.round-editor-manual-row {
+  @apply flex items-center justify-between gap-3 text-sm font-medium text-gray-700;
+}
+
+.round-editor-manual-input {
+  @apply w-24 rounded-lg border border-gray-300 px-3 py-2 text-right font-mono text-base
+         focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20;
+}
+
+.round-editor-footer {
+  @apply border-t border-gray-100 px-5 py-3 space-y-2;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.round-editor-hint {
+  @apply text-sm text-amber-700;
+}
+
+.round-editor-hint.error {
+  @apply text-red-600;
+}
+
+.round-editor-actions {
+  @apply flex gap-2;
+}
+
+.round-editor-btn {
+  @apply min-h-11 rounded-xl px-4 text-sm font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-50;
+}
+
+.round-editor-btn.primary {
+  @apply flex-1 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300 disabled:hover:bg-blue-300;
+}

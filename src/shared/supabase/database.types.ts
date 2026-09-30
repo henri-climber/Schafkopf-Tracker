@@ -11,7 +11,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: '14.1'
+    PostgrestVersion: '14.5'
   }
   public: {
     Tables: {
@@ -38,18 +38,21 @@ export type Database = {
           created_at: string
           player_id: number
           raw_score: number
+          role: Database['public']['Enums']['round_role'] | null
           round_id: number
         }
         Insert: {
           created_at?: string
           player_id: number
           raw_score?: number
+          role?: Database['public']['Enums']['round_role'] | null
           round_id?: number
         }
         Update: {
           created_at?: string
           player_id?: number
           raw_score?: number
+          role?: Database['public']['Enums']['round_role'] | null
           round_id?: number
         }
         Relationships: [
@@ -72,18 +75,57 @@ export type Database = {
       Rounds: {
         Row: {
           created_at: string
+          declarer_won: boolean | null
+          durchmarsch: boolean
+          game_mode: Database['public']['Enums']['schafkopf_game_mode'] | null
+          jungfrau: boolean
+          klopfer: number
+          kontra: boolean
+          laufende: number
+          re: boolean
+          schneider: boolean
+          schwarz: boolean
+          sie: boolean
+          suit: Database['public']['Enums']['schafkopf_suit'] | null
+          tout: boolean
           id: number
           round_number: number
           table_id: number
         }
         Insert: {
           created_at?: string
+          declarer_won?: boolean | null
+          durchmarsch?: boolean
+          game_mode?: Database['public']['Enums']['schafkopf_game_mode'] | null
+          jungfrau?: boolean
+          klopfer?: number
+          kontra?: boolean
+          laufende?: number
+          re?: boolean
+          schneider?: boolean
+          schwarz?: boolean
+          sie?: boolean
+          suit?: Database['public']['Enums']['schafkopf_suit'] | null
+          tout?: boolean
           id?: number
           round_number: number
           table_id: number
         }
         Update: {
           created_at?: string
+          declarer_won?: boolean | null
+          durchmarsch?: boolean
+          game_mode?: Database['public']['Enums']['schafkopf_game_mode'] | null
+          jungfrau?: boolean
+          klopfer?: number
+          kontra?: boolean
+          laufende?: number
+          re?: boolean
+          schneider?: boolean
+          schwarz?: boolean
+          sie?: boolean
+          suit?: Database['public']['Enums']['schafkopf_suit'] | null
+          tout?: boolean
           id?: number
           round_number?: number
           table_id?: number
@@ -97,6 +139,24 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      schafkopf_settings: {
+        Row: {
+          id: boolean
+          scoring_config: Json
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          scoring_config: Json
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          scoring_config?: Json
+          updated_at?: string
+        }
+        Relationships: []
       }
       table_players: {
         Row: {
@@ -137,6 +197,7 @@ export type Database = {
           id: number
           is_open: boolean
           name: string
+          scoring_config: Json
         }
         Insert: {
           after_photo_path?: string | null
@@ -146,6 +207,7 @@ export type Database = {
           id?: number
           is_open?: boolean
           name?: string
+          scoring_config?: Json
         }
         Update: {
           after_photo_path?: string | null
@@ -155,6 +217,7 @@ export type Database = {
           id?: number
           is_open?: boolean
           name?: string
+          scoring_config?: Json
         }
         Relationships: []
       }
@@ -265,9 +328,22 @@ export type Database = {
         Args: { p_table_id: number }
         Returns: {
           created_at: string
+          declarer_won: boolean | null
+          durchmarsch: boolean
+          game_mode: Database['public']['Enums']['schafkopf_game_mode'] | null
           id: number
+          jungfrau: boolean
+          klopfer: number
+          kontra: boolean
+          laufende: number
+          re: boolean
           round_number: number
+          schneider: boolean
+          schwarz: boolean
+          sie: boolean
+          suit: Database['public']['Enums']['schafkopf_suit'] | null
           table_id: number
+          tout: boolean
         }
         SetofOptions: {
           from: '*'
@@ -276,9 +352,59 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      current_scoring_config: { Args: never; Returns: Json }
+      save_round: {
+        Args: {
+          p_round: Json
+          p_round_id?: number
+          p_scores: Json
+          p_table_id: number
+        }
+        Returns: {
+          created_at: string
+          declarer_won: boolean | null
+          durchmarsch: boolean
+          game_mode: Database['public']['Enums']['schafkopf_game_mode'] | null
+          id: number
+          jungfrau: boolean
+          klopfer: number
+          kontra: boolean
+          laufende: number
+          re: boolean
+          round_number: number
+          schneider: boolean
+          schwarz: boolean
+          sie: boolean
+          suit: Database['public']['Enums']['schafkopf_suit'] | null
+          table_id: number
+          tout: boolean
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'Rounds'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_table_scoring_config: {
+        Args: { p_config: Json; p_rounds: Json; p_table_id: number }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      round_role: 'declarer' | 'partner' | 'opponent' | 'sitting_out'
+      schafkopf_game_mode:
+        | 'sauspiel'
+        | 'hochzeit'
+        | 'farbsolo'
+        | 'wenz'
+        | 'geier'
+        | 'farbwenz'
+        | 'farbgeier'
+        | 'bettel'
+        | 'ramsch'
+        | 'manual'
+      schafkopf_suit: 'eichel' | 'gras' | 'herz' | 'schellen'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -404,6 +530,21 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      round_role: ['declarer', 'partner', 'opponent', 'sitting_out'],
+      schafkopf_game_mode: [
+        'sauspiel',
+        'hochzeit',
+        'farbsolo',
+        'wenz',
+        'geier',
+        'farbwenz',
+        'farbgeier',
+        'bettel',
+        'ramsch',
+        'manual',
+      ],
+      schafkopf_suit: ['eichel', 'gras', 'herz', 'schellen'],
+    },
   },
 } as const
