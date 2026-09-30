@@ -1,5 +1,6 @@
 import { supabase } from '@/shared/supabase/client'
 import type { TableWithScores } from '@/features/schafkopf/domain/scoring'
+import type { RawStatsTable } from '@/features/schafkopf/domain/statistics/normalize'
 
 export interface DateRange {
   from: string
@@ -52,4 +53,28 @@ export async function fetchTablesWithScores(
     created_at: table.created_at,
     scores: table.Rounds.flatMap((round) => round.round_scores),
   }))
+}
+
+/**
+ * Every table in a date range with every round's facts and scores, for the
+ * statistics page. Unlike `fetchTablesWithScores` this returns excluded and
+ * open tables too: the page filters them on the client, so its toggles never
+ * refetch. All-time is ~170 tables / ~1500 rounds / ~6500 score rows today.
+ */
+export async function fetchStatsTables(range: DateRange): Promise<RawStatsTable[]> {
+  const { data, error } = await supabase
+    .from('Tables')
+    .select(
+      `id, created_at, is_open, exclude_from_overall,
+       Rounds(id, round_number, created_at, game_mode, suit, declarer_won, schneider, schwarz,
+         laufende, klopfer, kontra, re, tout, sie, jungfrau, durchmarsch,
+         round_scores(player_id, raw_score, role))`,
+    )
+    .gte('created_at', range.from)
+    .lte('created_at', range.to)
+    .order('created_at', { ascending: true })
+    .returns<RawStatsTable[]>()
+
+  if (error) throw error
+  return data ?? []
 }

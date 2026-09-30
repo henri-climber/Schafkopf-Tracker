@@ -416,6 +416,10 @@ export function LeaderboardPage() {
           <h3 className="chart-title">Performance History</h3>
           <ScoreHistoryChart series={series} players={playersQuery.data ?? []} />
         </div>
+
+        <button onClick={() => navigate('/stats')} className="stats-link-btn">
+          Mehr Statistiken →
+        </button>
       </div>
     </div>
   )

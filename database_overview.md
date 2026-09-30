@@ -76,6 +76,10 @@ where r.game_mode = 'farbsolo'
 group by p.name;
 ```
 
+## Statistics and legacy rounds
+
+The Stats page (`/stats`, `src/features/schafkopf/domain/statistics/`) reads rounds with and without a `game_mode`. Rounds without one (and `manual` rounds) are classified by their score pattern: two up / two down is a team game, one up / three down a won solo, one down / three up a lost solo **or** a Ramsch loser (the amounts overlap, so these stay ambiguous). All-zero rounds are ignored. Mode-only figures (win rate per mode, Kontra/Re, Ramsch) use only rounds with a recorded mode.
+
 ## Entity Relationship Diagram (Conceptual)
 
 ```mermaid

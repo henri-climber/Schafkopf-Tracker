@@ -12,6 +12,7 @@ import {
   ArrowRightIcon,
   TableCellsIcon,
   AdjustmentsHorizontalIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline'
 import { SportToggle } from '@/shared/sport-mode/SportToggle'
 import '@/shared/styles/home.css'
@@ -148,6 +149,19 @@ export function HomePage() {
           <div>
             <h2 className="action-card-title">Leaderboard</h2>
             <p className="action-card-description">View active rankings</p>
+          </div>
+        </div>
+
+        <div
+          onClick={() => navigate('/stats')}
+          className="action-card action-card-violet action-card-wide"
+        >
+          <div className="action-card-icon-wrapper">
+            <ChartBarIcon className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="action-card-title">Statistiken</h2>
+            <p className="action-card-description">Spielmodi, Soli, Duos und direkte Vergleiche</p>
           </div>
         </div>
       </div>

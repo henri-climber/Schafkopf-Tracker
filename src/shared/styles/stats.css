@@ -1,0 +1,356 @@
+@reference '@/shared/styles/index.css';
+
+.stats-header {
+  @apply flex items-center justify-between gap-3;
+}
+
+.stats-content {
+  @apply max-w-[1000px] mx-auto px-2 min-[800px]:px-4 py-4 space-y-4 min-[800px]:space-y-6 text-left;
+}
+
+.stats-loading {
+  @apply flex items-center justify-center py-24;
+}
+
+.stats-caption {
+  @apply text-xs text-gray-500 text-center;
+}
+
+/* Filters */
+.stats-filters {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-3 min-[800px]:p-4 flex flex-col gap-3 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center;
+}
+
+.stats-segmented {
+  @apply flex bg-gray-100 rounded-lg p-1 gap-1;
+}
+
+.stats-segmented-small {
+  @apply text-xs;
+}
+
+.stats-segment {
+  @apply flex-1 px-3 py-1.5 rounded-md text-sm font-medium text-gray-600 whitespace-nowrap transition-colors hover:text-gray-900;
+}
+
+.stats-segmented-small .stats-segment {
+  @apply text-xs px-2 py-1;
+}
+
+.stats-segment-active {
+  @apply bg-white text-blue-700 shadow-sm;
+}
+
+.stats-toggles {
+  @apply flex flex-wrap gap-x-2 justify-center min-[800px]:ml-auto;
+}
+
+/* Sections */
+.stats-section {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-3 min-[800px]:p-6 space-y-3;
+}
+
+.stats-section-header {
+  @apply space-y-0.5 text-left;
+}
+
+.stats-section-title {
+  @apply text-lg font-bold text-gray-800;
+}
+
+.stats-section-subtitle {
+  @apply text-xs text-gray-500;
+}
+
+.stats-subheading {
+  @apply text-xs font-semibold text-gray-500 uppercase tracking-wider pt-2;
+}
+
+.stats-empty {
+  @apply text-sm text-gray-500 bg-gray-50 rounded-xl p-4 text-center;
+}
+
+/* Tiles */
+.stats-tiles {
+  @apply grid grid-cols-2 min-[640px]:grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2 min-[800px]:gap-3;
+}
+
+.stats-tile {
+  @apply bg-gray-50 rounded-xl p-3 min-w-0;
+}
+
+.stats-tile-label {
+  @apply text-[11px] font-semibold text-gray-500 uppercase tracking-wide;
+}
+
+.stats-tile-value {
+  @apply text-2xl font-bold text-gray-900 font-mono mt-0.5;
+}
+
+.stats-tile-hint {
+  @apply text-xs text-gray-500 mt-0.5 truncate;
+}
+
+/* Semantics */
+.stats-positive {
+  @apply text-positive;
+}
+
+.stats-negative {
+  @apply text-negative;
+}
+
+.stats-muted {
+  @apply text-gray-400;
+}
+
+.stats-thin {
+  @apply opacity-45;
+}
+
+.stats-sample {
+  @apply text-[11px] text-gray-400 font-normal;
+}
+
+.stats-link {
+  @apply text-blue-600 hover:underline;
+}
+
+/* Split bar */
+.stats-split-bar {
+  @apply flex h-3 rounded-full overflow-hidden bg-gray-100;
+}
+
+.stats-split-segment {
+  @apply h-full;
+}
+
+.stats-legend {
+  @apply flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-gray-700;
+}
+
+.stats-legend-item {
+  @apply flex items-center gap-1.5;
+}
+
+.stats-legend-dot {
+  @apply inline-block w-2.5 h-2.5 rounded-full;
+}
+
+.stats-legend-value {
+  @apply text-gray-400;
+}
+
+.stats-fill-team {
+  @apply bg-blue-500;
+}
+
+.stats-fill-won {
+  @apply bg-emerald-500;
+}
+
+.stats-fill-loss {
+  @apply bg-rose-400;
+}
+
+.stats-fill-ramsch {
+  @apply bg-amber-400;
+}
+
+.stats-fill-other {
+  @apply bg-gray-300;
+}
+
+/* Tables */
+.stats-table-wrapper {
+  @apply overflow-x-auto -mx-3 min-[800px]:mx-0;
+}
+
+.stats-table {
+  @apply w-full text-sm;
+}
+
+.stats-table th {
+  @apply px-2 py-2 text-left text-[10px] min-[500px]:text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap bg-gray-50;
+}
+
+.stats-table td {
+  @apply px-2 py-2 whitespace-nowrap border-t border-gray-50;
+}
+
+.stats-table th.stats-num,
+.stats-table td.stats-num {
+  @apply text-right font-mono;
+}
+
+.stats-table th.stats-num {
+  @apply font-sans;
+}
+
+.stats-sortable {
+  @apply cursor-pointer select-none hover:text-gray-900;
+}
+
+.stats-name {
+  @apply font-medium text-gray-900;
+}
+
+.stats-sticky-col {
+  @apply sticky left-0 bg-white z-10;
+}
+
+.stats-table th.stats-sticky-col {
+  @apply bg-gray-50;
+}
+
+.stats-share {
+  @apply flex items-center justify-end gap-2;
+}
+
+.stats-share-track {
+  @apply hidden min-[500px]:inline-block w-16 h-1.5 rounded-full bg-gray-100 overflow-hidden;
+}
+
+.stats-share-fill {
+  @apply block h-full bg-blue-500;
+}
+
+/* Suits */
+.stats-chips {
+  @apply flex flex-wrap gap-2;
+}
+
+.stats-chip {
+  @apply flex items-center gap-2 text-sm bg-gray-50 rounded-lg px-3 py-1.5;
+}
+
+.stats-chip-value {
+  @apply text-gray-500 font-mono text-xs;
+}
+
+.stats-inline-list {
+  @apply text-sm text-gray-700 space-y-1;
+}
+
+/* Honours */
+.stats-honours {
+  @apply grid grid-cols-1 min-[500px]:grid-cols-2 min-[800px]:grid-cols-3 gap-2 min-[800px]:gap-3;
+}
+
+.stats-honour {
+  @apply flex items-center gap-3 bg-gray-50 rounded-xl p-3;
+}
+
+.stats-honour-icon {
+  @apply text-2xl shrink-0;
+}
+
+.stats-honour-title {
+  @apply text-[11px] font-semibold text-gray-500 uppercase tracking-wide;
+}
+
+.stats-honour-who {
+  @apply font-bold text-gray-900 truncate;
+}
+
+.stats-honour-value {
+  @apply text-xs text-gray-500;
+}
+
+/* Places */
+.stats-places {
+  @apply flex gap-2;
+}
+
+.stats-place {
+  @apply flex-1 bg-gray-50 rounded-xl py-2 flex flex-col items-center;
+}
+
+.stats-place-rank {
+  @apply text-xs text-gray-500 font-semibold;
+}
+
+.stats-place-value {
+  @apply font-mono font-bold;
+}
+
+/* Head to head */
+.stats-versus {
+  @apply flex items-center gap-2;
+}
+
+.stats-player-select {
+  @apply flex-1 min-w-0;
+}
+
+.stats-versus-label {
+  @apply text-sm font-bold text-gray-400 shrink-0;
+}
+
+.stats-compare {
+  @apply divide-y divide-gray-100;
+}
+
+.stats-compare-row {
+  @apply grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2;
+}
+
+.stats-compare-side {
+  @apply font-mono text-base min-[500px]:text-lg text-gray-600 min-w-0;
+}
+
+.stats-compare-right {
+  @apply text-right;
+}
+
+.stats-compare-lead {
+  @apply font-bold text-gray-900;
+}
+
+.stats-compare-label {
+  @apply text-xs text-gray-500 text-center w-32 min-[500px]:w-48;
+}
+
+.stats-compare-bar {
+  @apply mt-1 h-1.5 rounded-full bg-rose-300 overflow-hidden;
+}
+
+.stats-compare-bar-left {
+  @apply h-full bg-blue-500;
+}
+
+.stats-compare-center {
+  @apply text-sm text-gray-700 text-center py-2;
+}
+
+.stats-matrix-header {
+  @apply flex items-end justify-between gap-2;
+}
+
+.stats-matrix {
+  @apply text-xs border-separate border-spacing-0.5 mx-auto;
+}
+
+.stats-matrix-col {
+  @apply h-24 align-bottom font-medium text-gray-600 px-0;
+}
+
+.stats-matrix-col span {
+  @apply inline-block whitespace-nowrap [writing-mode:vertical-rl] rotate-180;
+}
+
+.stats-matrix-row {
+  @apply text-right pr-2 font-medium text-gray-600 whitespace-nowrap sticky left-0 bg-white z-10;
+}
+
+.stats-matrix-cell {
+  @apply w-11 h-9 min-w-11 text-center font-mono rounded-md bg-gray-50 cursor-pointer hover:ring-2 hover:ring-blue-300;
+}
+
+.stats-matrix-self {
+  @apply bg-gray-100 rounded-md;
+}
+
+.stats-matrix-selected {
+  @apply ring-2 ring-blue-600;
+}
