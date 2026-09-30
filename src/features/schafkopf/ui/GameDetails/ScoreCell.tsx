@@ -1,10 +1,5 @@
 import type { RoundRole } from '@/features/schafkopf/domain/gameModes'
 
-/** Empty means zero; anything unparseable also means zero. */
-export function parseScoreInput(value: string): number {
-  if (!value) return 0
-  return parseInt(value) || 0
-}
 
 /**
  * One player's score in one round. The role marks who played (and with whom),

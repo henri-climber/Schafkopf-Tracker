@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createTable, listTables } from './tables'
-import { fetchTablesWithScores, type DateRange, type StatsOptions } from './stats'
+import { fetchStatsTables, fetchTablesWithScores, type DateRange, type StatsOptions } from './stats'
 import { getGlobalScoringConfig, updateGlobalScoringConfig } from './scoringConfig'
 
 export const schafkopfKeys = {
@@ -11,6 +11,7 @@ export const schafkopfKeys = {
   rounds: (tableId: number) => ['schafkopf', 'rounds', tableId] as const,
   stats: (range: DateRange, options: StatsOptions) =>
     ['schafkopf', 'stats', range, options] as const,
+  statsTables: (range: DateRange) => ['schafkopf', 'statsTables', range] as const,
   scoringConfig: ['schafkopf', 'scoringConfig'] as const,
 }
 
@@ -44,6 +45,15 @@ export function useTablesWithScores(range: DateRange, options: StatsOptions) {
   return useQuery({
     queryKey: schafkopfKeys.stats(range, options),
     queryFn: () => fetchTablesWithScores(range, options),
+    staleTime: 60_000,
+  })
+}
+
+/** Every table in a range with round facts and roles, for the statistics page. */
+export function useStatsTables(range: DateRange) {
+  return useQuery({
+    queryKey: schafkopfKeys.statsTables(range),
+    queryFn: () => fetchStatsTables(range),
     staleTime: 60_000,
   })
 }

@@ -13,8 +13,13 @@ import {
   type ScoringConfig,
 } from '@/features/schafkopf/domain/gameModes'
 import type { Player } from '@/shared/supabase/types'
-import { parseScoreInput } from '../ScoreCell'
 import '@/shared/styles/round-editor.css'
+
+/** Empty means zero; anything unparseable also means zero. */
+function parseScoreInput(value: string): number {
+  if (!value) return 0
+  return parseInt(value) || 0
+}
 
 export type SuccessfulEvaluation = Extract<RoundEvaluation, { ok: true }>
 

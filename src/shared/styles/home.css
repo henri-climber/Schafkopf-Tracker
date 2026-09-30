@@ -55,6 +55,23 @@
   background: linear-gradient(135deg, #10b981, #059669);
 }
 
+.action-card-violet {
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+}
+
+/* Spans both columns as a shorter row, so a third card keeps the grid even. */
+.action-card-wide {
+  @apply md:col-span-2 h-auto flex-row items-center justify-start gap-4 py-5;
+}
+
+.action-card-wide .action-card-title {
+  @apply mt-0;
+}
+
+.action-card-wide .action-card-icon-wrapper {
+  @apply shrink-0;
+}
+
 .action-card-icon-wrapper {
   @apply bg-white/20 rounded-full w-12 h-12 flex items-center justify-center backdrop-blur-sm;
 }
