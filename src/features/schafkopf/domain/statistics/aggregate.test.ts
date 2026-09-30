@@ -252,6 +252,19 @@ describe('pairs', () => {
     expect(worst).toMatchObject({ a: 3, b: 4 })
     expect(nemesisOf(records, 3)?.record.rate).toBe(0)
     expect(duos(pairRecords(roundsOf(rounds[0])))).toEqual({ best: null, worst: null })
+
+    // Only one pair with enough team games: it is the best, not also the worst.
+    const onlyOnePair: RawStatsRound[] = []
+    for (let i = 0; i < MIN_PAIR_ROUNDS; i++) {
+      onlyOnePair.push(
+        i % 2
+          ? legacy([1, 10], [2, 10], [3, -10], [4, -10])
+          : legacy([1, 10], [2, 10], [5, -10], [6, -10]),
+      )
+    }
+    const single = duos(pairRecords(roundsOf(...onlyOnePair)))
+    expect(single.best).toMatchObject({ a: 1, b: 2 })
+    expect(single.worst).toBeNull()
   })
 })
 

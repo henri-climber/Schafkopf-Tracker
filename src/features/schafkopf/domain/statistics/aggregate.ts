@@ -539,7 +539,10 @@ export interface Duo {
   partner: Rate
 }
 
-/** Best and worst partnerships with enough team games together. */
+/**
+ * Best and worst partnerships with enough team games together. With a single
+ * eligible pair there is nothing to compare it against, so it is only the best.
+ */
 export function duos(records: Map<string, PairRecord>): { best: Duo | null; worst: Duo | null } {
   const eligible = [...records.values()].filter((r) => r.partner.n >= MIN_PAIR_ROUNDS)
   if (eligible.length === 0) return { best: null, worst: null }
@@ -547,7 +550,10 @@ export function duos(records: Map<string, PairRecord>): { best: Duo | null; wors
     (x, y) => y.partner.rate! - x.partner.rate! || y.partner.n - x.partner.n,
   )
   const pick = (r: PairRecord): Duo => ({ a: r.a, b: r.b, partner: r.partner })
-  return { best: pick(sorted[0]), worst: pick(sorted[sorted.length - 1]) }
+  return {
+    best: pick(sorted[0]),
+    worst: sorted.length > 1 ? pick(sorted[sorted.length - 1]) : null,
+  }
 }
 
 export interface Nemesis {

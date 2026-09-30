@@ -325,7 +325,7 @@ export function HonoursSection({
     'worstDuo',
     '🙈',
     'Schlechtestes Duo',
-    duos.worst && duos.worst !== duos.best ? duos.worst : null,
+    duos.worst,
     (d) => `${nameOf(d.a)} & ${nameOf(d.b)}`,
     (d) => `${formatPercent(d.partner.rate)} von ${d.partner.n} Teamspielen`,
   )
